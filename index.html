@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Protótipo v3 — Eco Invest 5º Leilão · Camada Agêntica ao vivo</title>
+<title>Consórcio Verde — Plataforma Eco Invest · 5º Leilão</title>
 <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
 <script src="https://js.arcgis.com/4.30/"></script>
 <style>
@@ -166,16 +166,16 @@ tr.clickable{cursor:pointer}tr.clickable:hover td{background:#F3F8F3}
 <body>
 <div class="layout">
 <nav class="sidebar">
-  <div class="logo"><h1>🌱 Consórcio Verde</h1><span>Eco Invest Brasil · 5º Leilão · protótipo v3 · camada agêntica</span></div>
+  <div class="logo"><h1>🌱 Consórcio Verde</h1><span>Eco Invest Brasil · 5º Leilão · plataforma agêntica</span></div>
   <div class="nav-sec">Camada Agêntica</div>
   <div class="nav-item" onclick="go('a0',this)">🤖 A0 · MAESTRO — frota ao vivo</div>
   <div class="nav-sec">Aplicações</div>
-  <div class="nav-item active" onclick="go('c1',this)">📡 C1 · Pipeline <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A1</span></div>
-  <div class="nav-item" onclick="go('c2',this)">🔬 C2 · Avaliação <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A2</span></div>
-  <div class="nav-item" onclick="go('c3',this)">🧪 C3 · Fomento P&D <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A3</span></div>
-  <div class="nav-item" onclick="go('c4',this)">📈 C4 · Fundos <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A4</span></div>
-  <div class="nav-item" onclick="go('c5',this)">🛰️ C5 · MRV <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A5</span></div>
-  <div class="nav-item" onclick="go('c6',this)">🔗 C6 · Ecossistema <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A6</span></div>
+  <div class="nav-item active" onclick="go('c1',this)">📡 Pipeline <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A1</span></div>
+  <div class="nav-item" onclick="go('c2',this)">🔬 Avaliação <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A2</span></div>
+  <div class="nav-item" onclick="go('c3',this)">🧪 Fomento P&D <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A3</span></div>
+  <div class="nav-item" onclick="go('c4',this)">📈 Fundos <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A4</span></div>
+  <div class="nav-item" onclick="go('c5',this)">🛰️ MRV <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A5</span></div>
+  <div class="nav-item" onclick="go('c6',this)">🔗 Ecossistema <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A6</span></div>
   <div class="nav-sec">Tenant</div>
   <div class="nav-item" style="cursor:default">🏦 Banco X · exclusividade: Biometano</div>
 </nav>
@@ -542,7 +542,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover td{background:#F3F8F3}
         <label style="cursor:pointer"><input type="checkbox" id="lyrLULC" checked onchange="toggleLyr('lulc',this.checked)"> 🌍 Living Atlas · Sentinel-2 LULC 10m</label>
         <label style="cursor:pointer"><input type="checkbox" id="lyrFire" onchange="toggleLyr('fire',this.checked)"> 🔥 Living Atlas · Focos térmicos VIIRS</label>
       </div>
-      <div id="arcgisMap" style="height:340px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#EEF2EE;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px">abrindo ArcGIS Maps SDK…</div>
+      <div id="arcgisMap" style="height:340px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#EEF2EE;position:relative;font-size:12px;color:#6B7280;padding:0"><div style="padding:14px;text-align:center">abrindo ArcGIS Maps SDK…</div></div>
       <div class="mini" style="margin-top:6px">🗺️ ArcGIS Maps SDK for JavaScript 4.30 · basemap World Imagery (hybrid) · camadas do Living Atlas of the World · clique nos ativos e polígonos para popups</div>
       <div class="barlbl" style="margin-top:12px"><span id="c5detlbl">Avanço biodigestor 3 — detecção 🤖 A5</span><b>jan → jun</b></div>
       <div style="display:flex;gap:4px;margin-top:6px" id="c5detbars"></div>
@@ -959,7 +959,7 @@ function gisFail(where,err){gisStarted=false;gisMsg('⚠️ Falha ao iniciar o m
 function toggleLyr(k,v){if(gisLayers[k])gisLayers[k].visible=v;if(gisReady)ledger('C5 · camada "'+k+'" '+(v?'ativada':'desativada')+' no visualizador GIS',true)}
 
 /* Estágio 1 — mapa base + ativos da OP-0087 (leve, sem dependências externas além do basemap) */
-function initGIS(){
+function initGIS(){console.log('[GIS] initGIS start');
  if(gisReady||gisStarted)return;
  if(typeof require==='undefined'){gisMsg('⏳ SDK ainda não carregado…');return}
  gisStarted=true;
@@ -989,7 +989,7 @@ function initGIS(){
    const map=new Map({basemap:"hybrid",layers:[mon]});
    gisView=new MapView({container:"arcgisMap",map:map,center:[-52.915,-28.352],zoom:12,constraints:{minZoom:4}});
    gisView.when(function(){
-     gisReady=true;
+     gisReady=true;console.log('[GIS] MapView ready');
      ledger('C5 · visualizador GIS iniciado · basemap World Imagery + ativos OP-0087',true);
      maestro('A5 → A0','geovisualização ativa · carregando camadas do Living Atlas');
      toast('Mapa ArcGIS carregado — adicionando camadas do Living Atlas…');
@@ -1026,6 +1026,7 @@ function gisLivingAtlas(){
 }
 
 /* Boot com retry: espera SDK baixar E container visível */
+const _goOrig=go;
 window.go=function(id,el){_goOrig(id,el);if(id==='c5')gisBoot()};
 let _gisTimer=null;
 function gisBoot(){
@@ -1042,6 +1043,21 @@ function gisBoot(){
    gisMsg('⚠️ Não foi possível baixar o ArcGIS SDK. Verifique a internet e <button class="btn" onclick="gisBoot()">tente novamente</button>')}
  },200)}
 window.addEventListener('load',function(){var s=document.getElementById('c5');if(s&&s.classList.contains('active'))gisBoot()});
+document.addEventListener('DOMContentLoaded',function(){var s=document.getElementById('c5');if(s&&s.classList.contains('active'))gisBoot()});
+(function(){
+ function watch(){
+  var n=document.getElementById('arcgisMap');
+  if(!n)return;
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting&&!gisReady&&!gisStarted){console.log('[GIS] container visível → boot');gisBoot()}})},{threshold:0.05}).observe(n);
+  }
+  setInterval(function(){
+    if(gisReady||gisStarted)return;
+    if(n.offsetParent!==null&&n.clientWidth>50&&typeof require!=='undefined'){console.log('[GIS] poll visível → init');initGIS()}
+  },1000);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
+})();
 
 /* ============ C6 ============ */
 let mmStep=0;
