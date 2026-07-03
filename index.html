@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protótipo v3 — Eco Invest 5º Leilão · Camada Agêntica ao vivo</title>
+<link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+<script src="https://js.arcgis.com/4.30/"></script>
+<style>
+:root{--green:#1B5E20;--green2:#2E7D32;--green3:#66BB6A;--bg:#F4F6F4;--dark:#1F2937;--gray:#6B7280;--border:#E5E7EB;--card:#FFF;--amber:#F59E0B;--red:#DC2626;--blue:#2563EB;--purple:#7C3AED}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:var(--bg);color:var(--dark)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--green);color:#fff;padding:20px 0;position:fixed;height:100vh;overflow-y:auto;z-index:20}
+.logo{padding:0 20px 18px;border-bottom:1px solid rgba(255,255,255,.2);margin-bottom:14px}
+.logo h1{font-size:17px}.logo span{font-size:11px;opacity:.75}
+.nav-item{padding:11px 20px;cursor:pointer;font-size:13.5px;display:flex;gap:10px;align-items:center;border-left:3px solid transparent;opacity:.85}
+.nav-item:hover{background:rgba(255,255,255,.08)}
+.nav-item.active{background:rgba(255,255,255,.14);border-left-color:#A5D6A7;opacity:1;font-weight:600}
+.nav-sec{padding:14px 20px 6px;font-size:10px;letter-spacing:1px;opacity:.55;text-transform:uppercase}
+.main{margin-left:250px;flex:1;padding:24px 28px;padding-bottom:90px}
+.screen{display:none}.screen.active{display:block}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.topbar h2{font-size:20px;color:var(--green)}
+.topbar .crumb{font-size:12px;color:var(--gray)}
+.userchip{background:#fff;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green3)}
+.kpis5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi .lbl{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+.kpi .val{font-size:23px;font-weight:700;color:var(--green);margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--gray);margin-top:2px}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.grid2b{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card h3{font-size:13px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 .tag{font-size:10px;background:#E8F5E9;color:var(--green);padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--gray);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr.clickable{cursor:pointer}tr.clickable:hover td{background:#F0F7F0}
+.b{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.bA{background:#E8F5E9;color:#1B5E20}.bB{background:#F1F8E9;color:#558B2F}.bC{background:#FFF8E1;color:#F57F17}
+.bD{background:#FFEBEE;color:#C62828}.bI{background:#E3F2FD;color:#1565C0}.bP{background:#F3E5F5;color:#6A1B9A}.bN{background:#ECEFF1;color:#455A64}
+.bar{height:9px;background:#EEF2EE;border-radius:5px;overflow:hidden;margin:4px 0 10px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green2),var(--green3));border-radius:5px;transition:width .5s}
+.barlbl{display:flex;justify-content:space-between;font-size:11.5px}
+.barlbl b{color:var(--green)}
+.fstep{background:linear-gradient(90deg,#E8F5E9,#fff);border:1px solid var(--border);border-radius:7px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:12px}
+.fstep b{color:var(--green)}
+.map{background:linear-gradient(135deg,#DCEDC8,#C8E6C9 40%,#B2DFDB);border-radius:8px;height:210px;position:relative;overflow:hidden}
+.pin{position:absolute;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer}
+.pin:hover{transform:scale(1.4)}
+.maplegend{position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,.93);border-radius:6px;padding:7px 10px;font-size:10px;line-height:1.7}
+.lg{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.trl{display:flex;gap:4px;margin:8px 0 4px}
+.trl span{flex:1;height:22px;border-radius:4px;background:#EEF2EE;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gray);transition:all .3s}
+.trl span.on{background:var(--green2);color:#fff;font-weight:700}
+.trl span.cur{background:var(--amber);color:#fff;font-weight:700;outline:2px solid #FDE68A}
+.tl{position:relative;padding-left:22px}
+.tl::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border)}
+.tli{position:relative;margin-bottom:12px;font-size:12px}
+.tli::before{content:'';position:absolute;left:-19.5px;top:3px;width:9px;height:9px;border-radius:50%;background:var(--green3);border:2px solid #fff;box-shadow:0 0 0 1.5px var(--green3)}
+.tli.pend::before{background:#fff;box-shadow:0 0 0 1.5px var(--gray)}
+.tli .d{font-size:10.5px;color:var(--gray)}
+.hash{font-family:Consolas,monospace;font-size:10px;background:#F3F4F6;padding:2px 6px;border-radius:4px;color:#374151}
+.sig{display:flex;gap:8px;align-items:center;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:9px 12px;font-size:11.5px;margin-top:10px}
+.sig .ic{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.btn{background:var(--green);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{background:var(--green2)}
+.btn:disabled{background:#CBD5D1;cursor:not-allowed}
+.btn.o{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+.btn.amber{background:var(--amber)}
+.btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.search{display:flex;gap:10px;margin-bottom:12px}
+.search input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;background:#fff}
+.chips{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.chip{background:#fff;border:1px solid var(--border);border-radius:15px;padding:5px 13px;font-size:11.5px;color:var(--gray);cursor:pointer}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.gwrap{position:relative;height:300px;background:#FAFBFA;border-radius:8px;border:1px solid var(--border)}
+.node{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;font-weight:600;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);padding:4px;cursor:pointer}
+.node:hover{transform:scale(1.08)}
+svg.edges{position:absolute;inset:0;width:100%;height:100%}
+.note{font-size:11px;color:var(--gray);font-style:italic;margin-top:10px}
+.split{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.score-big{text-align:center;padding:10px}
+.score-big .g{font-size:44px;font-weight:800;color:var(--green);transition:all .3s}
+.score-big .t{font-size:11px;color:var(--gray)}
+.warn{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:9px 12px;font-size:11.5px;color:#92400E;margin-top:10px}
+.head-note{background:#E8F5E9;border-radius:8px;padding:10px 14px;font-size:12px;color:#1B5E20;margin-bottom:14px}
+.drawer{position:fixed;top:0;right:-430px;width:430px;height:100vh;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:40;transition:right .3s;padding:22px;overflow-y:auto}
+.drawer.open{right:0}
+.drawer h4{color:var(--green);font-size:16px;margin-bottom:4px}
+.drawer .close{float:right;cursor:pointer;font-size:18px;color:var(--gray)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:540px;max-height:85vh;overflow-y:auto}
+.modal h4{color:var(--green);margin-bottom:12px;font-size:16px}
+.ledger-btn{position:fixed;bottom:18px;right:18px;z-index:45;background:var(--dark);color:#fff;border:none;border-radius:24px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.ledger-panel{position:fixed;bottom:70px;right:18px;width:430px;max-height:55vh;background:#111827;color:#D1D5DB;border-radius:12px;padding:16px;z-index:45;display:none;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.ledger-panel.open{display:block}
+.ledger-panel h4{color:#A5D6A7;font-size:13px;margin-bottom:10px}
+.lev{border-left:2px solid #374151;padding:6px 10px;margin-bottom:8px;font-size:11px}
+.lev .lh{font-family:Consolas,monospace;font-size:9.5px;color:#9CA3AF;word-break:break-all}
+.lev .lt{color:#A5D6A7;font-weight:600}
+.lev.agent{border-left-color:#7C3AED}.lev.agent .lt{color:#C4B5FD}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;z-index:60;display:none;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:640px;text-align:center}
+.chk{font-size:12px;display:flex;gap:8px;align-items:flex-start;padding:5px 0}
+.chk input{margin-top:2px}
+input.num,select.sel{border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;width:100%}
+.calcrow{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;margin-bottom:7px;font-size:12px}
+.pulse{animation:pulse 1.2s ease 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,50,.5)}70%{box-shadow:0 0 0 12px rgba(46,125,50,0)}100%{box-shadow:0 0 0 0 rgba(46,125,50,0)}}
+.scorebox{display:flex;gap:8px;margin:8px 0;align-items:end}
+.scorebox input{width:64px;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:13px;text-align:center}
+.scroll{max-height:420px;overflow-y:auto}
+.mini{font-size:10.5px;color:var(--gray)}
+.chainpill{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+/* ====== CAMADA AGÊNTICA ====== */
+.beat{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22C55E;margin-right:6px;animation:beat 1.6s infinite}
+@keyframes beat{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+.dock-btn{position:fixed;bottom:18px;left:270px;z-index:46;background:var(--purple);color:#fff;border:none;border-radius:24px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,.45)}
+.dock-btn .badge{background:#fff;color:var(--purple);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:6px}
+.dock{position:fixed;bottom:70px;left:270px;width:410px;max-height:62vh;background:#fff;border:1px solid var(--border);border-radius:14px;z-index:46;display:none;box-shadow:0 10px 34px rgba(0,0,0,.25);overflow:hidden}
+.dock.open{display:flex;flex-direction:column}
+.dock-head{background:linear-gradient(90deg,#4C1D95,#6D28D9);color:#fff;padding:12px 16px}
+.dock-head b{font-size:13.5px}
+.dock-head .st{font-size:10.5px;opacity:.9;margin-top:3px}
+.dock-feed{padding:12px 14px;overflow-y:auto;flex:1;background:#FAF9FE}
+.fev{background:#fff;border:1px solid #EDE9FE;border-left:3px solid var(--purple);border-radius:8px;padding:8px 11px;margin-bottom:8px;font-size:11.5px;animation:slidein .35s ease}
+.fev .ft{color:#6D28D9;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.fev .fd{color:var(--gray);font-size:10px;margin-top:2px}
+@keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fev.rec{border-left-color:var(--amber);background:#FFFDF5;border-color:#FDE68A}
+.fev.rec .ft{color:#B45309}
+.recbtns{display:flex;gap:6px;margin-top:7px}
+.recbtns button{border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.recbtns .ok{background:var(--green);color:#fff}.recbtns .no{background:#F3F4F6;color:var(--gray)}
+.typing{display:flex;gap:4px;padding:8px 12px;align-items:center;font-size:11px;color:#6D28D9}
+.typing i{width:6px;height:6px;border-radius:50%;background:#8B5CF6;animation:tp 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.fleet{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.acard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:13px 14px;position:relative;overflow:hidden}
+.acard.a0{grid-column:span 4;background:linear-gradient(90deg,#F5F3FF,#fff)}
+.acard .an{font-weight:800;font-size:13px;color:#4C1D95}
+.acard .am{font-size:10px;color:var(--gray);margin-bottom:6px}
+.acard .ast{font-size:11px;min-height:30px;color:#374151}
+.acard .ast i{color:#6D28D9;font-style:normal}
+.acard .ahb{font-size:9.5px;color:var(--gray);margin-top:6px;font-family:Consolas,monospace}
+.alevel{position:absolute;top:10px;right:10px;font-size:9px;font-weight:800;background:#EDE9FE;color:#6D28D9;padding:2px 7px;border-radius:8px}
+.prop{border-left:3px solid #6D28D9;background:#fff;border-radius:6px;padding:7px 10px;margin-bottom:7px;font-size:11.5px;animation:slidein .4s ease}
+.prop .pf{font-weight:700;color:#4C1D95;font-size:10.5px}
+.prop .pd{color:var(--gray);font-size:10px}
+.busvis{position:relative;height:230px;background:#FAF9FE;border:1px solid #EDE9FE;border-radius:10px;overflow:hidden}
+.bnode{position:absolute;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9.5px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2}
+.bnode.center{width:84px;height:84px;background:#4C1D95;font-size:11px}
+.spark{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px 3px rgba(245,158,11,.6);z-index:3;transition:all 1.1s ease-in-out;opacity:0}
+.ticker{background:#111827;color:#D1D5DB;border-radius:8px;padding:8px 14px;font-size:11.5px;margin-bottom:14px;display:flex;gap:10px;align-items:center;overflow:hidden;white-space:nowrap}
+.ticker b{color:#A5D6A7;flex-shrink:0}
+.ticker span{animation:none}
+
+tr.clickable{cursor:pointer}tr.clickable:hover td{background:#F3F8F3}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="logo"><h1>🌱 Consórcio Verde</h1><span>Eco Invest Brasil · 5º Leilão · protótipo v3 · camada agêntica</span></div>
+  <div class="nav-sec">Camada Agêntica</div>
+  <div class="nav-item" onclick="go('a0',this)">🤖 A0 · MAESTRO — frota ao vivo</div>
+  <div class="nav-sec">Aplicações</div>
+  <div class="nav-item active" onclick="go('c1',this)">📡 C1 · Pipeline <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A1</span></div>
+  <div class="nav-item" onclick="go('c2',this)">🔬 C2 · Avaliação <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A2</span></div>
+  <div class="nav-item" onclick="go('c3',this)">🧪 C3 · Fomento P&D <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A3</span></div>
+  <div class="nav-item" onclick="go('c4',this)">📈 C4 · Fundos <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A4</span></div>
+  <div class="nav-item" onclick="go('c5',this)">🛰️ C5 · MRV <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A5</span></div>
+  <div class="nav-item" onclick="go('c6',this)">🔗 C6 · Ecossistema <span style="margin-left:auto;font-size:9px;background:#7C3AED;padding:1px 6px;border-radius:8px">A6</span></div>
+  <div class="nav-sec">Tenant</div>
+  <div class="nav-item" style="cursor:default">🏦 Banco X · exclusividade: Biometano</div>
+</nav>
+
+<main class="main">
+
+<!-- ================= A0 MAESTRO ================= -->
+<section class="screen" id="a0">
+  <div class="topbar">
+    <div><h2>A0 · MAESTRO — Centro de Operações da Frota</h2><div class="crumb">7 agentes · propagação por contratos de dados · trilha actor_type: agent</div></div>
+    <div class="userchip"><span class="beat"></span> Frota operante · autonomia máx. N5</div>
+  </div>
+  <div class="ticker"><b>BUS ▶</b><span id="tick">aguardando eventos da frota…</span></div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">Agentes ativos</div><div class="val">7/7</div><div class="sub">todos dentro do SLA</div></div>
+    <div class="kpi"><div class="lbl">Eventos da frota (hoje)</div><div class="val" id="k_ev">1.284</div><div class="sub">+<span id="k_evd">0</span> nesta sessão</div></div>
+    <div class="kpi"><div class="lbl">Propagações via A0</div><div class="val" id="k_prop">96</div><div class="sub">100% dentro de contrato</div></div>
+    <div class="kpi"><div class="lbl">Recomendações pendentes</div><div class="val" id="k_rec">3</div><div class="sub">aguardando humano</div></div>
+    <div class="kpi"><div class="lbl">Modo proposta</div><div class="val" style="font-size:16px;padding-top:6px">standby</div><div class="sub">ativa na data-corte do leilão</div></div>
+  </div>
+  <div class="fleet" id="fleet"></div>
+  <div class="grid2b">
+    <div class="card">
+      <h3>Barramento de propagação <span class="tag">faíscas = eventos fluindo em tempo real</span></h3>
+      <div class="busvis" id="busvis">
+        <div class="bnode center" style="top:calc(50% - 42px);left:calc(50% - 42px)">A0<br>MAESTRO</div>
+        <div class="bnode" style="background:#2E7D32;top:8px;left:calc(50% - 32px)">A1<br>C1</div>
+        <div class="bnode" style="background:#2563EB;top:calc(25% - 20px);right:26px">A2<br>C2</div>
+        <div class="bnode" style="background:#F59E0B;bottom:calc(25% - 20px);right:26px">A3<br>C3</div>
+        <div class="bnode" style="background:#455A64;bottom:8px;left:calc(50% - 32px)">A4<br>C4</div>
+        <div class="bnode" style="background:#0D9488;bottom:calc(25% - 20px);left:26px">A5<br>C5</div>
+        <div class="bnode" style="background:#7C3AED;top:calc(25% - 20px);left:26px">A6<br>C6</div>
+        <div class="spark" id="spark"></div>
+      </div>
+      <div class="note">Cada faísca é um evento propagado sob contrato de dados — ex.: parecer emitido em C2 atualiza a ficha em C1 e habilita matchmaking em C6.</div>
+    </div>
+    <div class="card">
+      <h3>Log de propagações <span class="tag">ao vivo · também reage às SUAS ações nos módulos</span></h3>
+      <div id="proplog" style="max-height:260px;overflow-y:auto">
+        <div class="prop"><div class="pf">A2 → A1 · contrato dados-parecer-v1</div>parecer TEC-2026-039 (H2Verde · A−) refletido na ficha do pipeline<div class="pd">16:41 · hash ok · actor_type: agent</div></div>
+        <div class="prop"><div class="pf">A1 → A2, A3, A4, A6 · flag bloqueante</div>restrição de integridade SoloTech propagada a 4 módulos<div class="pd">16:22 · prioridade máxima</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Regras de governança em vigor</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:11.5px;line-height:1.7">
+      <div>🚫 <b>Sem N6:</b> nenhum agente decide — teto é execução supervisionada com assinatura humana</div>
+      <div>🔍 <b>Trilha dupla:</b> eventos de agente marcados em roxo no ledger (actor_type: agent) com versão de modelo</div>
+      <div>⏸ <b>Kill switch:</b> qualquer agente pode ser pausado sem parar o módulo (modo manual documentado)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C1 ================= -->
+<section class="screen active" id="c1">
+  <div class="topbar">
+    <div><h2>Radar de Pipeline Qualificado</h2><div class="crumb">C1 · Originação · Tenant: Banco X · 🤖 A1 PROSPECTOR operando — veja o Copiloto</div></div>
+    <div class="userchip"><span class="dot"></span> Ana Souza · Analista de Originação</div>
+  </div>
+  <div class="search"><input id="c1search" placeholder="🔍  Filtrar por nome, tecnologia, tipo ou UF…" oninput="c1filter()"><button class="btn" onclick="c1filter()">Buscar</button></div>
+  <div class="chips" id="c1chips">
+    <span class="chip on" onclick="c1chain('todas',this)">Todas (30)</span>
+    <span class="chip" onclick="c1chain('Biometano',this)">🟢 Biometano (8)</span>
+    <span class="chip" onclick="c1chain('Fertilizantes',this)">🟤 Fertilizantes (5)</span>
+    <span class="chip" onclick="c1chain('Baterias',this)">🔵 Baterias (5)</span>
+    <span class="chip" onclick="c1chain('Química',this)">🟣 Química (4)</span>
+    <span class="chip" onclick="c1chain('IA',this)">⚫ IA industrial (4)</span>
+    <span class="chip" onclick="c1chain('Resíduos',this)">🟠 Resíduos (4)</span>
+  </div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">No radar</div><div class="val" id="k_radar">312</div><div class="sub" id="k_radars">+18 esta semana</div></div>
+    <div class="kpi"><div class="lbl">Elegíveis</div><div class="val">147</div><div class="sub">regras v2.1</div></div>
+    <div class="kpi"><div class="lbl">Exibidas</div><div class="val" id="k_show">30</div><div class="sub">no filtro atual</div></div>
+    <div class="kpi"><div class="lbl">Score A / B</div><div class="val" id="k_ab">9 / 13</div><div class="sub">nesta amostra</div></div>
+    <div class="kpi"><div class="lbl">CAPEX agregado</div><div class="val" id="k_capex">R$ 7,9 bi</div><div class="sub">no filtro atual</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Oportunidades qualificadas <span class="tag">clique numa linha para abrir o dossiê</span></h3>
+      <div class="scroll">
+      <table id="c1table">
+        <thead><tr><th onclick="c1sort('n')" style="cursor:pointer">Organização ⇅</th><th>Cadeia</th><th>UF</th><th onclick="c1sort('trl')" style="cursor:pointer">TRL ⇅</th><th onclick="c1sort('capexN')" style="cursor:pointer">CAPEX ⇅</th><th onclick="c1sort('s')" style="cursor:pointer">Score ⇅</th><th>Estágio</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      </div>
+      <div class="btnrow">
+        <button class="btn" onclick="openModal('mCaderno')">📄 Emitir Caderno de Pipeline</button>
+        <button class="btn o" onclick="toast('Dataset CSV exportado: 30 fichas com procedência completa')">Exportar dataset</button>
+      </div>
+      <div class="sig" id="c1sig"><div class="ic">✓</div><div><b>Último Caderno:</b> 28/06/2026 · 63 oportunidades · score v3.2<br><span class="hash">SHA-256: 8f3a…c91d</span> · ICP-Brasil · ledger #4.799</div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Funil de originação <span class="tag">reage aos avanços</span></h3>
+        <div id="funil"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Distribuição por cadeia (CAPEX)</h3>
+        <div id="chainbars"></div>
+      </div>
+      <div class="card">
+        <h3>Alertas do radar — gerados pelo A1 <span class="tag">🤖 novos chegam ao vivo</span></h3>
+        <div class="tl" id="c1alerts">
+          <div class="tli"><b>Nova patente</b> — MetanoTech: purificação PSA<div class="d">hoje · INPI · score recalculado B→B+ · 🤖 A1</div></div>
+          <div class="tli"><b>EIA/RIMA protocolado</b> — NitroVerde Amônia<div class="d">hoje · IBAMA · 🤖 A1</div></div>
+          <div class="tli"><b>Alerta negativo</b> — SoloTech: sócio com restrição<div class="d">3 dias · triagem de integridade · score C→D · 🤖 A1</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C2 ================= -->
+<section class="screen" id="c2">
+  <div class="topbar">
+    <div><h2>Célula de Avaliação Tecnológica</h2><div class="crumb">C2 · 🤖 A2 EXAMINER organiza evidências e despacha four-eyes — veja o Copiloto</div></div>
+    <div class="userchip"><span class="dot"></span> Dr. Carlos Lima · Responsável Técnico</div>
+  </div>
+  <div class="head-note">🔒 Segregação ativa (IAM). O A2 pré-preenche a rubrica com trechos citáveis, mas <b>todo juízo técnico é humano</b>. Marque critérios → rating recalcula; conclua four-eyes para emitir.</div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">Pareceres emitidos</div><div class="val">47</div><div class="sub">desde jan/2026</div></div>
+    <div class="kpi"><div class="lbl">Em análise</div><div class="val">9</div><div class="sub">SLA médio 12 dias → meta 8 c/ A2</div></div>
+    <div class="kpi"><div class="lbl">Avaliadores</div><div class="val">18</div><div class="sub">credenciados</div></div>
+    <div class="kpi"><div class="lbl">Impedimentos (A2)</div><div class="val">6</div><div class="sub">capturados automaticamente</div></div>
+    <div class="kpi"><div class="lbl">Trechos IA validados</div><div class="val">12/12</div><div class="sub">neste caso · registrado</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <h3>Fila de casos — despacho do A2 <span class="tag">clique num caso para o dossiê completo</span></h3>
+    <table>
+      <tr><th>Caso</th><th>Organização</th><th>Cadeia</th><th>Responsável</th><th>Revisor (sorteio A2)</th><th>SLA</th><th>Status</th></tr>
+      <tr class="clickable" style="background:#F0F7F0" onclick="c2case('041')"><td><b>#TEC-2026-041</b></td><td>BioMetano Sul S.A.</td><td>Biometano</td><td>C. Lima</td><td>P. Reis · sem conflito ✓</td><td>D-3</td><td><span class="b bC">Em revisão — aberto abaixo</span></td></tr>
+      <tr class="clickable" onclick="c2case('042')"><td>#TEC-2026-042</td><td>NitroVerde Amônia</td><td>Fertilizantes</td><td>M. Ohara</td><td>R. Fontes · sem conflito ✓</td><td>D-7</td><td><span class="b bI">Em elaboração</span></td></tr>
+      <tr class="clickable" onclick="c2case('043')"><td>#TEC-2026-043</td><td>ElectraCell</td><td>Baterias</td><td>P. Reis</td><td>C. Lima · sem conflito ✓</td><td>D-9</td><td><span class="b bI">Em elaboração</span></td></tr>
+      <tr class="clickable" onclick="c2case('044')"><td>#TEC-2026-044</td><td>PiroCycle</td><td>Resíduos</td><td>J. Castro</td><td id="c2sorteio"><i>🤖 A2 sorteando…</i></td><td>D-12</td><td><span class="b bN">Coleta de evidências</span></td></tr>
+    </table>
+  </div>
+  <div class="split">
+    <div class="card score-big"><div class="t">RATING TÉCNICO (calculado)</div><div class="g" id="rating">B+</div><div class="t" id="ratingsub">complete a rubrica para consolidar</div></div>
+    <div class="card"><h3>Maturidade — TRL</h3>
+      <div class="trl" id="trlbar"></div>
+      <div style="font-size:11.5px;color:var(--gray)" id="trltxt">TRL atual: 7</div>
+    </div>
+    <div class="card"><h3>Rubrica TRL <span class="tag">🤖 pré-preenchida pelo A2 · validar</span></h3>
+      <div class="chk"><input type="checkbox" checked disabled><span>TRL≤7: protótipo em ambiente operacional <i class="mini">(A2: 9 evidências · validado por humano)</i></span></div>
+      <div class="chk"><input type="checkbox" id="r81" onchange="c2calc()"><span>TRL8: sistema qualificado ≥12 meses <i class="mini">(A2 achou 2 laudos-suporte)</i></span></div>
+      <div class="chk"><input type="checkbox" id="r82" onchange="c2calc()"><span>TRL8: disponibilidade ≥90% <i class="mini">(A2 achou 1 atestado)</i></span></div>
+      <div class="chk"><input type="checkbox" id="r91" onchange="c2calc()"><span>TRL9: operação comercial <i class="mini">(A2: lacuna — sem evidência)</i></span></div>
+    </div>
+  </div>
+  <div class="grid2b">
+    <div class="card">
+      <h3>Matriz de risco tecnológico <span class="tag">ajuste e veja o rating reagir</span></h3>
+      <div class="calcrow"><span>Dependência de insumo crítico (membranas)</span>
+        <select class="sel" id="riskInsumo" onchange="c2calc()"><option value="alto">Alta</option><option value="medio" selected>Média-alta</option><option value="baixo">Baixa (mitigada)</option></select></div>
+      <div class="bar"><i id="barInsumo" style="width:68%;background:var(--amber)"></i></div>
+      <div class="calcrow"><span>Risco de escala industrial</span>
+        <select class="sel" id="riskEscala" onchange="c2calc()"><option value="alto">Alto</option><option value="medio" selected>Médio</option><option value="baixo">Baixo</option></select></div>
+      <div class="bar"><i id="barEscala" style="width:45%"></i></div>
+      <div class="barlbl"><span>Incerteza científica</span><b>Baixa</b></div><div class="bar"><i style="width:22%"></i></div>
+      <div class="barlbl"><span>PI / liberdade de operação</span><b>Baixa — FTO favorável</b></div><div class="bar"><i style="width:25%"></i></div>
+      <div class="warn" id="c2warn">⚠ Condicionante ativa: plano de contingência para membranas, exigível pré-desembolso.</div>
+    </div>
+    <div class="card">
+      <h3>Emissão do parecer — fluxo four-eyes</h3>
+      <div class="tl">
+        <div class="tli"><b>Elaboração</b> — Dr. Carlos Lima<div class="d">30/06 · IA assistiva validada em 12 trechos (registrado)</div></div>
+        <div class="tli pend" id="tlRev"><b>Revisão independente</b> — Dra. Paula Reis<div class="d" id="tlRevD">pendente — sem revisão não há emissão</div></div>
+        <div class="tli pend" id="tlEmit"><b>Emissão PDF/A + ICP-Brasil</b><div class="d" id="tlEmitD">bloqueada até revisão</div></div>
+      </div>
+      <div class="chk"><input type="checkbox" id="chkRev" onchange="c2rev()"><span><b>Simular revisão four-eyes concluída</b> (P. Reis)</span></div>
+      <div class="btnrow">
+        <button class="btn" id="btnEmit" disabled onclick="c2emit()">✍️ Assinar e emitir parecer</button>
+        <button class="btn o" onclick="toast('42 evidências indexadas pelo A2 por critério da rubrica — cada uma com hash e trecho citável')">Ver evidências (42)</button>
+      </div>
+      <div id="c2done"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C3 ================= -->
+<section class="screen" id="c3">
+  <div class="topbar">
+    <div><h2>Portal de Fomento — Recursos Não Reembolsáveis</h2><div class="crumb">C3 · 🤖 A3 GRANTMASTER: triagem, impedimentos e trava SoD — veja o Copiloto</div></div>
+    <div class="userchip"><span class="dot"></span> Marcos Dias · Gestor de Fomento</div>
+  </div>
+  <div class="head-note">⚖️ SoD imposta por máquina: o A3 habilita os botões <b>somente na ordem certa</b> — aceite técnico antes de desembolso, perfis distintos, sem override.</div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">Chamadas</div><div class="val">3</div><div class="sub">2 em execução · 1 aberta</div></div>
+    <div class="kpi"><div class="lbl">Propostas (Chamada 03)</div><div class="val" id="k_props">82</div><div class="sub" id="k_propss">🤖 A3 triando ao vivo</div></div>
+    <div class="kpi"><div class="lbl">Projetos contratados</div><div class="val">31</div><div class="sub">R$ 86 mi outorgados</div></div>
+    <div class="kpi"><div class="lbl">Desembolso executado</div><div class="val" id="k_des">R$ 27,4 mi</div><div class="sub" id="k_desp">32% · contra marco aceito</div></div>
+    <div class="kpi"><div class="lbl">Impedimentos (A3)</div><div class="val" id="k_imp">14</div><div class="sub">grafo coautoria/vínculos</div></div>
+  </div>
+  <div class="grid2">
+    <div>
+    <div class="card" style="margin-bottom:14px">
+      <h3>Mecânica 1 — Julgamento por pares <span class="tag">A3 distribui · humanos julgam</span></h3>
+      <div style="font-size:12px;margin-bottom:8px"><b>Proposta #P-077:</b> "Upgrading de biogás com membranas nacionais" — UFPR + startup · R$ 2,4 mi</div>
+      <div class="mini">🤖 A3 impediu o Avaliador 2 automaticamente (coautoria 2024) e sorteou substituto.</div>
+      <div class="scorebox">
+        <div><div class="mini">Aval. 1 · K. Tanaka</div><input type="number" id="n1" min="0" max="10" step="0.1" value="8.5"></div>
+        <div><div class="mini">Subst. · F. Silveira</div><input type="number" id="n2" min="0" max="10" step="0.1" value="7.8"></div>
+        <div><div class="mini">Aval. 3 · O. Mendes</div><input type="number" id="n3" min="0" max="10" step="0.1" value="9.0"></div>
+        <button class="btn" onclick="c3julga()">Consolidar notas</button>
+      </div>
+      <div id="julgares" style="font-size:12.5px;margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h3>Projetos contratados — físico × financeiro <span class="tag">clique num projeto para detalhes</span></h3>
+      <div class="scroll" style="max-height:300px">
+      <table>
+        <tr><th>Projeto</th><th>Executor</th><th>Outorga</th><th>Marco</th><th>Físico</th><th>Financ.</th><th>Status</th></tr>
+        <tr class="clickable" onclick="c3proj('crio')"><td><b>Purificação criogênica</b></td><td>UFSC + MetanoTech</td><td>R$ 4,2 mi</td><td id="m_marco">M3/6</td><td>52%</td><td id="m_fin">48%</td><td id="m_st"><span class="b bC">M3 em análise</span></td></tr>
+        <tr class="clickable" onclick="c3proj('bioin')"><td><b>Bioinsumo fixador p/ cana</b></td><td>ESALQ/USP</td><td>R$ 3,1 mi</td><td>M2/5</td><td>38%</td><td>40%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('dig')"><td><b>Digestato biofertilizante</b></td><td>Embrapa + coop. PR</td><td>R$ 2,8 mi</td><td>M2/4</td><td>25%</td><td>31%</td><td><span class="b bC">🤖 desvio 6% detectado</span></td></tr>
+        <tr class="clickable" onclick="c3proj('iot')"><td><b>Sensores IoT biodigestores</b></td><td>SENAI-PR</td><td>R$ 1,9 mi</td><td>M4/6</td><td>71%</td><td>66%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('lfp')"><td><b>Reciclagem baterias LFP</b></td><td>UFMG + ReMineral</td><td>R$ 5,6 mi</td><td>M2/6</td><td>30%</td><td>28%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('nio')"><td><b>Cátodos com nióbio</b></td><td>ICT + ElectraCell</td><td>R$ 6,3 mi</td><td>M3/5</td><td>55%</td><td>58%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('ele')"><td><b>Eletrólise alcalina</b></td><td>UFPE + H2Verde</td><td>R$ 4,8 mi</td><td>M1/5</td><td>15%</td><td>12%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('sol')"><td><b>Solventes bio-based</b></td><td>UNICAMP + BioSolve</td><td>R$ 2,2 mi</td><td>M3/4</td><td>68%</td><td>72%</td><td><span class="b bC">🤖 cronograma</span></td></tr>
+        <tr class="clickable" onclick="c3proj('gd')"><td><b>Gêmeo digital químico</b></td><td>ITA + InduAI</td><td>R$ 3,4 mi</td><td>M2/5</td><td>34%</td><td>30%</td><td><span class="b bA">Em dia</span></td></tr>
+        <tr class="clickable" onclick="c3proj('piro')"><td><b>Pirólise de plásticos</b></td><td>UFRJ + PiroCycle</td><td>R$ 3,9 mi</td><td>M1/6</td><td>8%</td><td>10%</td><td><span class="b bD">🤖 desembolsos bloqueados (CONEP)</span></td></tr>
+      </table>
+      </div>
+    </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Mecânica 2 — Trava marco → aceite → desembolso</h3>
+        <div style="font-size:11.5px;margin-bottom:6px"><b>Marco M3 · Purificação criogênica</b> · piloto 50 Nm³/h</div>
+        <div class="tl">
+          <div class="tli"><b>Relatório M3 recebido</b><div class="d">28/06 · hash na chegada · 🤖 A3 conferiu completude</div></div>
+          <div class="tli pend" id="tAceite"><b>Aceite técnico</b> — Dra. H. Nunes<div class="d" id="tAceiteD">pendente</div></div>
+          <div class="tli pend" id="tDesemb"><b>Liberação R$ 1,4 mi</b> — gestor sênior<div class="d" id="tDesembD">🤖 A3 mantém bloqueado até aceite</div></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn amber" id="btnAceite" onclick="c3aceite()">1️⃣ Registrar aceite técnico</button>
+          <button class="btn" id="btnDesemb" disabled onclick="c3desemb()">2️⃣ Autorizar desembolso</button>
+        </div>
+        <div class="note">A trava é do agente: o botão 2 não existe habilitado sem o evento de aceite no ledger.</div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Execução por chamada</h3>
+        <div class="barlbl"><span>Chamada 01/2026</span><b>R$ 14,2/38,5 mi</b></div><div class="bar"><i style="width:37%"></i></div>
+        <div class="barlbl"><span>Chamada 02/2026</span><b>R$ 13,2/31,0 mi</b></div><div class="bar"><i style="width:43%"></i></div>
+        <div class="barlbl"><span>Bolsas e ICT</span><b>R$ 4,1 mi</b></div><div class="bar"><i style="width:52%"></i></div>
+      </div>
+      <div class="card">
+        <h3>Transparência ativa</h3>
+        <div style="font-size:12px;line-height:1.8">🌐 Painel público atualizado pelo 🤖 A3 a cada evento<br>📁 Editais versionados · 412 propostas · 3 avaliadores cada<br><span class="hash">ledger #4.812 · íntegro (verificação 06:00)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C4 ================= -->
+<section class="screen" id="c4">
+  <div class="topbar">
+    <div><h2>Workspace do Comitê — Fundo de Inovação Eco Invest I</h2><div class="crumb">C4 · 🤖 A4 ADVISOR prepara pauta e memos · estruturalmente sem permissão "decidir"</div></div>
+    <div class="userchip"><span class="dot"></span> Dra. Paula Reis · Advisor Técnico</div>
+  </div>
+  <div class="head-note">⚖️ Fronteira CVM 175 em código: nem o advisor humano nem o A4 possuem a permissão de decisão — só o comitê fiduciário da gestora.</div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">PL do fundo</div><div class="val">R$ 320 mi</div><div class="sub">70% integralizado</div></div>
+    <div class="kpi"><div class="lbl">Investidas</div><div class="val">8</div><div class="sub">6 cadeias</div></div>
+    <div class="kpi"><div class="lbl">Capital investido</div><div class="val">R$ 148 mi</div><div class="sub">ticket médio R$ 18,5 mi</div></div>
+    <div class="kpi"><div class="lbl">Pauta 08/07 (A4)</div><div class="val">4</div><div class="sub">entregue D-5 ✓</div></div>
+    <div class="kpi"><div class="lbl">Sinais de portfólio</div><div class="val">🟢5 🟡2 🔴1</div><div class="sub">🤖 monitoramento contínuo</div></div>
+  </div>
+  <div class="grid2">
+    <div>
+    <div class="card" style="margin-bottom:14px">
+      <h3>Pauta do comitê — priorizada pelo 🤖 A4 <span class="tag">clique para o memo completo</span></h3>
+      <table>
+        <tr><th>Oportunidade</th><th>Cadeia</th><th>Ticket</th><th>Nota C2</th><th>Recomendação (advisor)</th><th>Decisão (comitê)</th></tr>
+        <tr class="clickable" onclick="c4opp('electra')"><td><b>ElectraCell — cátodos LFP</b></td><td>Baterias</td><td>R$ 25 mi</td><td><span class="b bA">8,4</span></td><td id="rec1"><span class="b bN">Não registrada</span></td><td id="dec1"><span class="b bN">Pendente</span></td></tr>
+        <tr class="clickable" onclick="c4opp('verdequim')"><td><b>VerdeQuim — solventes</b></td><td>Química</td><td>R$ 18 mi</td><td><span class="b bB">7,1</span></td><td><span class="b bA">Favorável · #4.815</span></td><td><span class="b bN">Pendente</span></td></tr>
+        <tr class="clickable" onclick="c4opp('fertialgae')"><td><b>FertiAlgae</b></td><td>Fertilizantes</td><td>R$ 12 mi</td><td><span class="b bC">5,8</span></td><td><span class="b bD">Desfavorável · #4.816</span></td><td><span class="b bN">Pendente</span></td></tr>
+        <tr class="clickable" onclick="c4opp('circuit')"><td><b>CircuitSense — IA fornos</b></td><td>IA industrial</td><td>R$ 9 mi</td><td><span class="b bA">8,1</span></td><td><span class="b bA">Favorável · #4.818</span></td><td><span class="b bN">Pendente</span></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Portfólio — sinais do 🤖 A4 <span class="tag">clique numa investida</span></h3>
+      <table>
+        <tr><th>Investida</th><th>Aporte</th><th>Marco</th><th>Progresso</th><th>Sinal A4</th></tr>
+        <tr class="clickable" onclick="c4inv('InduAI')"><td><b>InduAI</b></td><td>R$ 22 mi</td><td>TRL 6→8</td><td>70%</td><td><span class="b bA">🟢 no prazo</span></td></tr>
+        <tr class="clickable" onclick="c4inv('ReMineral')"><td><b>ReMineral</b></td><td>R$ 28 mi</td><td>planta demo</td><td>40%</td><td><span class="b bC">🟡 atraso 2m · plano ok</span></td></tr>
+        <tr class="clickable" onclick="c4inv('BioSolve')"><td><b>BioSolve</b></td><td>R$ 15 mi</td><td>REACH</td><td>85%</td><td><span class="b bA">🟢 no prazo</span></td></tr>
+        <tr class="clickable" onclick="c4inv('MetanoTech')"><td><b>MetanoTech</b></td><td>R$ 8 mi</td><td>piloto 500 Nm³/h</td><td>55%</td><td><span class="b bA">🟢 no prazo</span></td></tr>
+        <tr class="clickable" onclick="c4inv('H2Verde Nordeste')"><td><b>H2Verde Nordeste</b></td><td>R$ 35 mi</td><td>FEED</td><td>90%</td><td><span class="b bA">🟢 no prazo</span></td></tr>
+        <tr class="clickable" onclick="c4inv('AgriSat')"><td><b>AgriSat</b></td><td>R$ 6 mi</td><td>escala</td><td>62%</td><td><span class="b bA">🟢 no prazo</span></td></tr>
+        <tr class="clickable" onclick="c4inv('LithiumLoop')"><td><b>LithiumLoop</b></td><td>R$ 19 mi</td><td>1kt/ano</td><td>35%</td><td><span class="b bC">🟡 licença em análise</span></td></tr>
+        <tr class="clickable" onclick="c4inv('PiroCycle')"><td><b>PiroCycle</b></td><td>R$ 15 mi</td><td>scale-up</td><td>20%</td><td><span class="b bD">🔴 revisão extraordinária convocada</span></td></tr>
+      </table>
+    </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Memo técnico — ElectraCell <span class="tag">🤖 rascunho do A4 · advisor valida</span></h3>
+        <div style="font-size:12px;line-height:1.75">
+          <b>Tese:</b> nacionalização de cátodos LFP · <b>TRL:</b> 7 · <b>PI:</b> FTO ok<br>
+          <b>Risco-chave:</b> qualificação OEM 18–24m · <b>Sinergia:</b> projeto C3 nióbio<br>
+          <b>Recomendação:</b> <select class="sel" id="c4sel" style="width:auto;display:inline-block"><option>Favorável c/ condicionante de off-take ≥40%</option><option>Favorável sem condicionante</option><option>Desfavorável</option></select>
+        </div>
+        <div class="btnrow">
+          <button class="btn" id="btnRec" onclick="c4rec()">Registrar recomendação (consultiva)</button>
+          <button class="btn" disabled title="Bloqueado: fronteira CVM 175">🔒 Aprovar investimento</button>
+        </div>
+        <div id="c4done"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Simular decisão independente do comitê</h3>
+        <div class="btnrow">
+          <button class="btn o" onclick="c4dec('Aprovado')">Comitê: aprovar</button>
+          <button class="btn o" onclick="c4dec('Reprovado')">Comitê: reprovar</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Alocação por cadeia</h3>
+        <div class="barlbl"><span>Baterias e minerais</span><b>R$ 47 mi</b></div><div class="bar"><i style="width:32%"></i></div>
+        <div class="barlbl"><span>Fertilizantes verdes</span><b>R$ 35 mi</b></div><div class="bar"><i style="width:24%"></i></div>
+        <div class="barlbl"><span>IA industrial</span><b>R$ 28 mi</b></div><div class="bar"><i style="width:19%"></i></div>
+        <div class="barlbl"><span>Química verde</span><b>R$ 15 mi</b></div><div class="bar"><i style="width:10%"></i></div>
+        <div class="barlbl"><span>Resíduos</span><b>R$ 15 mi</b></div><div class="bar"><i style="width:10%"></i></div>
+        <div class="barlbl"><span>Biometano</span><b>R$ 8 mi</b></div><div class="bar"><i style="width:5%"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C5 ================= -->
+<section class="screen" id="c5">
+  <div class="topbar">
+    <div><h2>Evidência Territorial e MRV</h2><div class="crumb">C5 · 🤖 A5 SENTINEL · ArcGIS Maps SDK for JS + Living Atlas · clique numa operação para abrir o dossiê MRV</div></div>
+    <div class="userchip"><span class="dot"></span> Júlia Prado · Analista MRV</div>
+  </div>
+  <div class="head-note">🧮 O A5 recalcula indicadores a cada insumo novo e vigia o território. <b>Selecione uma operação na carteira</b> → o mapa voa até o polígono financiado e o dossiê MRV (calculadora, memória, detecções e alertas) troca de contexto.</div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">Operações monitoradas</div><div class="val">6</div><div class="sub">R$ 1,9 bi</div></div>
+    <div class="kpi"><div class="lbl">Emissões evitadas (12m)</div><div class="val">214 ktCO₂e</div><div class="sub">±7,1% médio</div></div>
+    <div class="kpi"><div class="lbl">Alertas territoriais</div><div class="val" id="k_alert">1</div><div class="sub">em apuração (OP-0092)</div></div>
+    <div class="kpi"><div class="lbl">Pacotes de evidência</div><div class="val" id="k_pac">23</div><div class="sub">WORM · ICP-Brasil</div></div>
+    <div class="kpi"><div class="lbl">Latência detecção→alerta</div><div class="val">14h</div><div class="sub">meta &lt;24h · 🤖 A5</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <h3>Carteira monitorada <span class="tag">clique numa linha para abrir o dossiê MRV no mapa</span></h3>
+    <table id="c5tab">
+      <tr><th>Operação</th><th>Tomador</th><th>Financiado</th><th>Avanço</th><th>ktCO₂e/ano</th><th>Status</th></tr>
+      <tr class="clickable" id="row-OP-0087" onclick="c5sel('OP-0087')"><td><b>OP-0087</b></td><td>BioMetano Sul</td><td>R$ 380 mi</td><td>78%</td><td>48,2 ±6,5%</td><td><span class="b bA">Regular</span></td></tr>
+      <tr class="clickable" id="row-OP-0088" onclick="c5sel('OP-0088')"><td><b>OP-0088</b></td><td>AgroGás Coop.</td><td>R$ 240 mi</td><td>45%</td><td>31,0 ±8,0%</td><td><span class="b bA">Regular</span></td></tr>
+      <tr class="clickable" id="row-OP-0090" onclick="c5sel('OP-0090')"><td><b>OP-0090</b></td><td>NitroVerde</td><td>R$ 610 mi</td><td>22%</td><td>88,4 ±7,5% (proj.)</td><td><span class="b bA">Obra inicial</span></td></tr>
+      <tr class="clickable" id="row-OP-0091" onclick="c5sel('OP-0091')"><td><b>OP-0091</b></td><td>Landfill Energy</td><td>R$ 170 mi</td><td>91%</td><td>27,7 ±5,9%</td><td><span class="b bA">Pré-operacional</span></td></tr>
+      <tr class="clickable" id="row-OP-0092" onclick="c5sel('OP-0092')"><td><b>OP-0092</b></td><td>Usina Verde</td><td>R$ 280 mi</td><td>34%</td><td>18,9 ±9,2% (proj.)</td><td><span class="b bC">🤖 A5: supressão vegetal em apuração</span></td></tr>
+      <tr class="clickable" id="row-OP-0093" onclick="c5sel('OP-0093')"><td><b>OP-0093</b></td><td>BioSolve</td><td>R$ 190 mi</td><td>60%</td><td>12,1 ±6,8%</td><td><span class="b bA">Regular</span></td></tr>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><span id="c5title">OP-0087 · BioMetano Sul — monitoramento territorial</span> <span class="tag">ArcGIS SDK · Living Atlas ao vivo</span></h3>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:8px;align-items:center">
+        <b style="color:var(--green)">Camadas:</b>
+        <label style="cursor:pointer"><input type="checkbox" id="lyrMon" checked onchange="toggleLyr('mon',this.checked)"> Ativos monitorados (🤖 A5)</label>
+        <label style="cursor:pointer"><input type="checkbox" id="lyrLULC" checked onchange="toggleLyr('lulc',this.checked)"> 🌍 Living Atlas · Sentinel-2 LULC 10m</label>
+        <label style="cursor:pointer"><input type="checkbox" id="lyrFire" onchange="toggleLyr('fire',this.checked)"> 🔥 Living Atlas · Focos térmicos VIIRS</label>
+      </div>
+      <div id="arcgisMap" style="height:340px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#EEF2EE;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px">abrindo ArcGIS Maps SDK…</div>
+      <div class="mini" style="margin-top:6px">🗺️ ArcGIS Maps SDK for JavaScript 4.30 · basemap World Imagery (hybrid) · camadas do Living Atlas of the World · clique nos ativos e polígonos para popups</div>
+      <div class="barlbl" style="margin-top:12px"><span id="c5detlbl">Avanço biodigestor 3 — detecção 🤖 A5</span><b>jan → jun</b></div>
+      <div style="display:flex;gap:4px;margin-top:6px" id="c5detbars"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Calculadora MRV — <span id="c5calctit">OP-0087 · mrv-biometano v2.0</span> <span class="tag">🤖 A5 recalcula</span></h3>
+        <div class="calcrow"><span id="c5l1">Biometano injetado (mi Nm³/ano)</span><input class="num" type="number" id="v1" value="21.5" step="0.1"></div>
+        <div class="calcrow"><span id="c5l2">Fator de emissão (t/1000 Nm³)</span><input class="num" type="number" id="v2" value="1.96" step="0.01"></div>
+        <div class="calcrow"><span id="c5l3">Fator de captura de metano</span><input class="num" type="number" id="v3" value="1.14" step="0.01"></div>
+        <div class="btnrow"><button class="btn" onclick="c5calc()">🧮 Recalcular</button><button class="btn o" id="btnPac" onclick="c5pac()">📦 Selar pacote</button></div>
+        <div id="c5memo" style="margin-top:10px;font-size:11.5px;background:#F9FAFB;border:1px dashed var(--border);border-radius:8px;padding:10px"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px" id="c5alertcard">
+        <h3 id="c5alerttit">Alertas 🤖 A5 — OP-0087</h3>
+        <div id="c5alertbody"></div>
+      </div>
+      <div class="card">
+        <h3>Portal do auditor</h3>
+        <div style="font-size:12px;line-height:1.8">👁 Somente-leitura · 14 artefatos acessados · <span class="b bA">Sem ressalvas 1T/2T</span></div>
+        <div class="btnrow"><button class="btn" onclick="toast('Relatório circunstanciado pré-composto pelo A5 — pronto para assinatura do banco')">Compor relatório circunstanciado</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= C6 ================= -->
+<section class="screen" id="c6">
+  <div class="topbar">
+    <div><h2>Grafo do Ecossistema — 6 cadeias</h2><div class="crumb">C6 · 🤖 A6 WEAVER: matchmaking com racional citável + CLM — veja o Copiloto</div></div>
+    <div class="userchip"><span class="dot"></span> Renato Alves · Gestor de Ecossistema</div>
+  </div>
+  <div class="head-note">🔗 O A6 sugere conexões com justificativa e gere o ciclo dos acordos. Aceite a sugestão → conexão tracejada; assine o MOU → linha cheia + métricas.</div>
+  <div class="kpis5">
+    <div class="kpi"><div class="lbl">Atores mapeados</div><div class="val">96</div><div class="sub">6 cadeias · 14 UFs</div></div>
+    <div class="kpi"><div class="lbl">ICTs conectadas</div><div class="val">14</div><div class="sub">acordo vigente</div></div>
+    <div class="kpi"><div class="lbl">MOUs assinados</div><div class="val" id="k_mous">23</div><div class="sub">ICP-Brasil · CLM</div></div>
+    <div class="kpi"><div class="lbl">Taxa de aceite (A6)</div><div class="val">64%</div><div class="sub">sugestões → conexões</div></div>
+    <div class="kpi"><div class="lbl">Minutas paradas</div><div class="val" id="k_minutas">2</div><div class="sub">🤖 A6 cobrando as partes</div></div>
+  </div>
+  <div class="grid2">
+    <div>
+    <div class="card" style="margin-bottom:14px">
+      <h3>Mapa de conexões — biometano <span class="tag">clique num ator para a ficha completa</span></h3>
+      <div class="gwrap">
+        <svg class="edges" id="edges">
+          <line x1="50%" y1="42%" x2="22%" y2="18%" stroke="#A5D6A7" stroke-width="2"/>
+          <line x1="50%" y1="42%" x2="76%" y2="16%" stroke="#A5D6A7" stroke-width="2"/>
+          <line x1="50%" y1="42%" x2="82%" y2="58%" stroke="#FBC02D" stroke-width="2" stroke-dasharray="5,4"/>
+          <line x1="50%" y1="42%" x2="28%" y2="70%" stroke="#A5D6A7" stroke-width="2"/>
+          <line x1="50%" y1="42%" x2="55%" y2="84%" stroke="#90CAF9" stroke-width="2"/>
+          <line x1="22%" y1="18%" x2="8%" y2="45%" stroke="#A5D6A7" stroke-width="1.5"/>
+          <line x1="28%" y1="70%" x2="8%" y2="45%" stroke="#CFD8DC" stroke-width="1.5" stroke-dasharray="3,4"/>
+          <line x1="76%" y1="16%" x2="92%" y2="35%" stroke="#A5D6A7" stroke-width="1.5"/>
+          <line x1="82%" y1="58%" x2="92%" y2="35%" stroke="#FBC02D" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <line id="newEdge" x1="76%" y1="16%" x2="55%" y2="84%" stroke="#FBC02D" stroke-width="2" stroke-dasharray="5,4" style="display:none"/>
+        </svg>
+        <div class="node" style="width:86px;height:86px;top:calc(42% - 43px);left:calc(50% - 43px);background:var(--green)" onclick="c6actor('anc')">BioMetano Sul<br>(âncora)</div>
+        <div class="node" style="width:62px;height:62px;top:calc(18% - 31px);left:calc(22% - 31px);background:var(--blue)" onclick="c6actor('ufsc')">UFSC<br>ICT</div>
+        <div class="node" style="width:62px;height:62px;top:calc(16% - 31px);left:calc(76% - 31px);background:var(--purple)" onclick="c6actor('mtech')">MetanoTech<br>startup</div>
+        <div class="node" style="width:66px;height:66px;top:calc(58% - 33px);left:calc(82% - 33px);background:var(--amber)" onclick="c6actor('dist')">Distribuidora<br>(off-taker)</div>
+        <div class="node" style="width:60px;height:60px;top:calc(70% - 30px);left:calc(28% - 30px);background:var(--green3)" onclick="c6actor('coop')">Coop.<br>AgroGás</div>
+        <div class="node" style="width:58px;height:58px;top:calc(84% - 29px);left:calc(55% - 29px);background:#455A64" onclick="c6actor('fundo')">Fundo<br>Inovação I</div>
+        <div class="node" style="width:54px;height:54px;top:calc(45% - 27px);left:calc(8% - 27px);background:var(--blue)" onclick="c6actor('embrapa')">Embrapa</div>
+        <div class="node" style="width:54px;height:54px;top:calc(35% - 27px);left:calc(92% - 27px);background:var(--amber)" onclick="c6actor('trading')">Trading<br>agro</div>
+      </div>
+      <div class="note">Linha cheia = assinado · tracejada amarela = negociação · azul = coinvestimento · cinza = sugerida pelo 🤖 A6.</div>
+    </div>
+    <div class="card">
+      <h3>Atores por categoria e cadeia</h3>
+      <table>
+        <tr><th>Categoria</th><th>Biomet.</th><th>Fertil.</th><th>Bater.</th><th>Quím.</th><th>IA</th><th>Resíd.</th><th>Total</th></tr>
+        <tr><td><b>Âncoras</b></td><td>4</td><td>3</td><td>2</td><td>3</td><td>2</td><td>2</td><td><b>16</b></td></tr>
+        <tr><td><b>Startups</b></td><td>7</td><td>4</td><td>6</td><td>4</td><td>8</td><td>3</td><td><b>32</b></td></tr>
+        <tr><td><b>ICTs</b></td><td>5</td><td>4</td><td>3</td><td>3</td><td>2</td><td>2</td><td><b>19</b></td></tr>
+        <tr><td><b>Off-takers</b></td><td>4</td><td>3</td><td>2</td><td>2</td><td>1</td><td>2</td><td><b>14</b></td></tr>
+        <tr><td><b>Investidores</b></td><td>2</td><td>2</td><td>3</td><td>2</td><td>4</td><td>2</td><td><b>15</b></td></tr>
+      </table>
+    </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Matchmaking 🤖 A6 — com racional</h3>
+        <table>
+          <tr><th>Par sugerido</th><th>Racional</th><th></th></tr>
+          <tr id="mm1"><td>Fundo I ⇄ MetanoTech</td><td>tese purificação · nota C2: 7,8</td><td><button class="btn" style="padding:5px 12px" onclick="c6match()">Propor</button></td></tr>
+          <tr><td>Embrapa ⇄ Usina Verde</td><td>digestato → biofertilizante</td><td><button class="btn o" style="padding:5px 12px" onclick="toast('Proposta enviada — aguardando opt-in duplo')">Propor</button></td></tr>
+          <tr><td>SENAI-PR ⇄ AgroGás</td><td>IoT (demanda declarada)</td><td><button class="btn o" style="padding:5px 12px" onclick="toast('Proposta enviada — aguardando opt-in duplo')">Propor</button></td></tr>
+          <tr><td>UFMG ⇄ LithiumLoop</td><td>hidrometalurgia · projeto C3</td><td><button class="btn o" style="padding:5px 12px" onclick="toast('Proposta enviada — aguardando opt-in duplo')">Propor</button></td></tr>
+        </table>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Acordos (CLM) — 🤖 A6 gere o ciclo</h3>
+        <div class="tl" id="c6tl">
+          <div class="tli"><b>MOU</b> — UFSC × BioMetano Sul<div class="d">assinado ICP-Brasil · 25/06 · 24m</div></div>
+          <div class="tli"><b>CI off-take</b> — Distribuidora × AgroGás<div class="d">minuta v3 · 🤖 A6 agendou reunião 10/07</div></div>
+          <div class="tli"><b>Coinvestimento</b> — Fundo I × VC<div class="d">assinado · 18/06</div></div>
+          <div class="tli"><b>CI biofertilizante</b> — Trading × NitroVerde<div class="d">term sheet · 🤖 A6: exclusividade vence em 41 dias</div></div>
+        </div>
+        <div class="btnrow"><button class="btn" onclick="toast('Métricas seladas pelo A6: 96 atores, 23 MOUs, densidade 0,31 — prontas p/ Caderno da proposta')">📊 Exportar métricas p/ proposta</button></div>
+      </div>
+      <div class="card">
+        <h3>Próximos eventos</h3>
+        <div class="tl">
+          <div class="tli pend"><b>Rodada baterias</b><div class="d">15/07 · BH · 🤖 A6 montou por densidade de interesse</div></div>
+          <div class="tli pend"><b>Demoday IA industrial</b><div class="d">28/07 · SP · 8 startups</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- Drawer C1 -->
+<div class="drawer" id="drawer">
+  <span class="close" onclick="closeDrawer()">✕</span>
+  <h4 id="dTitle">—</h4>
+  <div style="font-size:11.5px;color:var(--gray);margin-bottom:12px" id="dSub">—</div>
+  <div class="card" style="margin-bottom:12px"><h3>Decomposição do score (v3.2)</h3><div id="dDims"></div></div>
+  <div class="card" style="margin-bottom:12px"><h3>Procedência dos dados</h3><div style="font-size:11.5px;line-height:1.8" id="dProv"></div></div>
+  <div class="btnrow">
+    <button class="btn" id="dAdv" onclick="c1advance()">➡️ Avançar estágio no funil</button>
+    <button class="btn o" onclick="toast('Solicitação de parecer C2 aberta — A2 vai indexar as evidências e sortear revisor')">Solicitar parecer C2</button>
+  </div>
+</div>
+
+<!-- Modal Caderno -->
+<div class="modal-bg" id="mCaderno">
+  <div class="modal">
+    <h4>📄 Emitir Caderno de Pipeline — prova de originação</h4>
+    <div style="font-size:12.5px;line-height:1.9">
+      <b>Data-corte:</b> 03/07/2026 · <b>Tenant:</b> Banco X · <b>Preparado por:</b> 🤖 A1 (N5 — assinatura humana obrigatória)<br>
+      <b>Escopo:</b> 6 cadeias · 147 elegíveis · amostra de 30 (9 A · 13 B) · CAPEX R$ 7,9 bi
+    </div>
+    <div class="warn">Ao emitir, o documento torna-se imutável: hash + ICP-Brasil + ledger — prova de que o pipeline existia antes da proposta.</div>
+    <div class="btnrow">
+      <button class="btn" onclick="c1emitCaderno()">Confirmar emissão (assinatura humana)</button>
+      <button class="btn o" onclick="closeModal('mCaderno')">Cancelar</button>
+    </div>
+    <div id="cadres"></div>
+  </div>
+</div>
+
+<!-- COPILOTO DOCK -->
+<button class="dock-btn" id="dockBtn" onclick="document.getElementById('dock').classList.toggle('open')">🤖 Copiloto <span id="dockAg">A1</span><span class="badge" id="dockBadge">0</span></button>
+<div class="dock open" id="dock">
+  <div class="dock-head"><b id="dhName">A1 · PROSPECTOR</b> <span style="float:right;font-size:10px"><span class="beat"></span>operando</span><div class="st" id="dhSt">varrendo fontes públicas · ciclo diário + eventos</div></div>
+  <div class="dock-feed" id="dockFeed"></div>
+  <div class="typing" id="dockTyping" style="display:none"><i></i><i></i><i></i>&nbsp;processando…</div>
+</div>
+
+<button class="ledger-btn" onclick="document.getElementById('lp').classList.toggle('open')">🔗 Ledger (<span id="levn">0</span>)</button>
+<div class="ledger-panel" id="lp">
+  <h4>LEDGER IMUTÁVEL — humanos (verde) e agentes (roxo)</h4>
+  <div id="levs"><div class="lev"><span class="lt">GENESIS</span> · sessão iniciada · SSO + MFA<div class="lh">hash: 0000…a1b2 · 03/07/2026</div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ infra ============ */
+function go(id,el){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active');closeDrawer();switchAgent(id)}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._x);t._x=setTimeout(()=>t.style.display='none',3800)}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+let prevHash='a1b2';
+function fakeHash(){const c='0123456789abcdef';let h='';for(let i=0;i<8;i++)h+=c[Math.floor(Math.random()*16)];return h}
+function ledger(evt,agent){const h=fakeHash();const n=document.getElementById('levs');const d=document.createElement('div');d.className='lev'+(agent?' agent':'');d.innerHTML='<span class="lt">'+(agent?'🤖 ':'')+evt+'</span><div class="lh">hash: '+h.slice(0,4)+'…'+h.slice(4)+' · prev: '+prevHash+' · '+now()+(agent?' · actor_type: agent · modelo v1.4':' · ICP-Brasil ✓')+'</div>';n.prepend(d);prevHash=h.slice(0,4);const c=document.getElementById('levn');c.textContent=parseInt(c.textContent)+1}
+function now(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+
+/* ============ C1 data (30 opps) ============ */
+const P='CNPJ/Receita (01/07)';
+const opps=[
+{n:'BioMetano Sul S.A.',c:'Biometano',t:'Empresa madura',uf:'RS',trl:8,capexN:420,s:'A',st:4,dims:{'Maturidade (TRL)':92,'Solidez financeira':85,'Aderência Eco Invest':95,'Time e governança':80,'Impacto climático':90},prov:P+' · INPI 3 patentes · ANP autorização · demonstrações auditadas'},
+{n:'AgroGás Cooperativa',c:'Biometano',t:'Coop. agroindustrial',uf:'PR',trl:7,capexN:280,s:'A',st:5,dims:{'Maturidade (TRL)':84,'Solidez financeira':78,'Aderência Eco Invest':92,'Time e governança':75,'Impacto climático':88},prov:P+' · CAR regular · off-take em minuta v3'},
+{n:'Landfill Energy BR',c:'Biometano',t:'Scale-up',uf:'SP',trl:9,capexN:190,s:'B',st:3,dims:{'Maturidade (TRL)':96,'Solidez financeira':62,'Aderência Eco Invest':88,'Time e governança':70,'Impacto climático':82},prov:P+' · série A R$ 60 mi · licença de operação SP'},
+{n:'MetanoTech (spin-off UFSC)',c:'Biometano',t:'Startup / ICT',uf:'SC',trl:5,capexN:45,s:'B',st:2,dims:{'Maturidade (TRL)':55,'Solidez financeira':40,'Aderência Eco Invest':90,'Time e governança':72,'Impacto climático':85},prov:'INPI patente PSA (03/07) · Lattes · FINEP 2024'},
+{n:'Usina Verde Vinhaça',c:'Biometano',t:'Projeto territorial',uf:'GO',trl:6,capexN:310,s:'C',st:2,dims:{'Maturidade (TRL)':66,'Solidez financeira':58,'Aderência Eco Invest':85,'Time e governança':60,'Impacto climático':87},prov:P+' · licença prévia SEMAD-GO · estudo UFG'},
+{n:'RSU Bioenergia Metropolitana',c:'Biometano',t:'Concessionária',uf:'MG',trl:8,capexN:520,s:'B',st:3,dims:{'Maturidade (TRL)':88,'Solidez financeira':74,'Aderência Eco Invest':86,'Time e governança':77,'Impacto climático':91},prov:P+' · concessão 20 anos · aterro 3.000 t/dia'},
+{n:'Pecuária Circular Norte',c:'Biometano',t:'Integradora',uf:'MT',trl:6,capexN:150,s:'C',st:1,dims:{'Maturidade (TRL)':62,'Solidez financeira':66,'Aderência Eco Invest':80,'Time e governança':58,'Impacto climático':84},prov:P+' · 40 confinamentos · pré-viabilidade EMBRAPII'},
+{n:'GásVerde Paulista',c:'Biometano',t:'Empresa madura',uf:'SP',trl:8,capexN:240,s:'B',st:2,dims:{'Maturidade (TRL)':87,'Solidez financeira':71,'Aderência Eco Invest':83,'Time e governança':73,'Impacto climático':79},prov:P+' · ANP · 2 plantas operando'},
+{n:'NitroVerde Amônia',c:'Fertilizantes',t:'Empresa madura',uf:'BA',trl:7,capexN:890,s:'A',st:3,dims:{'Maturidade (TRL)':80,'Solidez financeira':88,'Aderência Eco Invest':94,'Time e governança':82,'Impacto climático':93},prov:P+' · EIA/RIMA protocolado · MOU H₂ verde'},
+{n:'H2Verde Nordeste',c:'Fertilizantes',t:'Joint venture',uf:'CE',trl:7,capexN:1200,s:'A',st:4,dims:{'Maturidade (TRL)':78,'Solidez financeira':90,'Aderência Eco Invest':96,'Time e governança':85,'Impacto climático':95},prov:P+' · FEED concluído · off-take assinado · Pecém'},
+{n:'FertiAlgae',c:'Fertilizantes',t:'Startup',uf:'RN',trl:4,capexN:38,s:'C',st:2,dims:{'Maturidade (TRL)':45,'Solidez financeira':35,'Aderência Eco Invest':82,'Time e governança':65,'Impacto climático':72},prov:'INPI 1 pedido · seed 2025 · piloto 200 m²'},
+{n:'SoloTech Bioinsumos',c:'Fertilizantes',t:'Scale-up',uf:'GO',trl:6,capexN:85,s:'D',st:1,dims:{'Maturidade (TRL)':68,'Solidez financeira':52,'Aderência Eco Invest':78,'Time e governança':30,'Impacto climático':70},prov:'⚠ Restrição de integridade (triagem 30/06) — C→D'},
+{n:'FosfoBio Recupera',c:'Fertilizantes',t:'Empresa madura',uf:'MG',trl:7,capexN:340,s:'B',st:2,dims:{'Maturidade (TRL)':76,'Solidez financeira':70,'Aderência Eco Invest':84,'Time e governança':74,'Impacto climático':81},prov:P+' · fósforo de lodo · piloto SABESP'},
+{n:'ElectraCell',c:'Baterias',t:'Scale-up',uf:'MG',trl:7,capexN:350,s:'B',st:3,dims:{'Maturidade (TRL)':78,'Solidez financeira':60,'Aderência Eco Invest':86,'Time e governança':74,'Impacto climático':80},prov:'INPI 2 patentes · seed 2025 · nota C2: 8,4'},
+{n:'LithiumLoop Reciclagem',c:'Baterias',t:'Startup',uf:'SP',trl:6,capexN:120,s:'B',st:2,dims:{'Maturidade (TRL)':64,'Solidez financeira':48,'Aderência Eco Invest':88,'Time e governança':70,'Impacto climático':86},prov:'INPI 1 patente · investida Fundo I · CETESB em análise'},
+{n:'Vale do Lítio Mineração',c:'Baterias',t:'Empresa madura',uf:'MG',trl:8,capexN:780,s:'B',st:3,dims:{'Maturidade (TRL)':85,'Solidez financeira':79,'Aderência Eco Invest':75,'Time e governança':76,'Impacto climático':68},prov:P+' · ANM concessão · due ambiental em curso'},
+{n:'GrafenoBr Anodos',c:'Baterias',t:'Startup / ICT',uf:'RJ',trl:4,capexN:55,s:'C',st:2,dims:{'Maturidade (TRL)':44,'Solidez financeira':38,'Aderência Eco Invest':80,'Time e governança':68,'Impacto climático':74},prov:'spin-off COPPE · 2 pedidos INPI · CNPq'},
+{n:'PowerPack Sistemas',c:'Baterias',t:'Empresa madura',uf:'AM',trl:8,capexN:290,s:'B',st:1,dims:{'Maturidade (TRL)':82,'Solidez financeira':73,'Aderência Eco Invest':81,'Time e governança':71,'Impacto climático':75},prov:P+' · ZFM · LOI montadora'},
+{n:'BioSolve Química',c:'Química',t:'Empresa madura',uf:'SP',trl:8,capexN:210,s:'B',st:2,dims:{'Maturidade (TRL)':86,'Solidez financeira':72,'Aderência Eco Invest':84,'Time e governança':78,'Impacto climático':76},prov:P+' · ISCC+ · nota C2: B+'},
+{n:'VerdeQuim Solventes',c:'Química',t:'Scale-up',uf:'PR',trl:7,capexN:95,s:'B',st:3,dims:{'Maturidade (TRL)':74,'Solidez financeira':58,'Aderência Eco Invest':85,'Time e governança':72,'Impacto climático':78},prov:'em pauta Fundo I (7,1) · piloto 500 t/ano'},
+{n:'CanaCarbon Química',c:'Química',t:'Empresa madura',uf:'SP',trl:7,capexN:430,s:'A',st:2,dims:{'Maturidade (TRL)':79,'Solidez financeira':84,'Aderência Eco Invest':90,'Time e governança':80,'Impacto climático':85},prov:P+' · etanol→eteno verde · MOU petroquímica'},
+{n:'EnzimaTech',c:'Química',t:'Startup / ICT',uf:'RJ',trl:5,capexN:32,s:'C',st:1,dims:{'Maturidade (TRL)':52,'Solidez financeira':36,'Aderência Eco Invest':79,'Time e governança':66,'Impacto climático':71},prov:'spin-off UFRJ · biocatálise · FAPERJ'},
+{n:'InduAI',c:'IA',t:'Scale-up',uf:'SP',trl:7,capexN:60,s:'A',st:4,dims:{'Maturidade (TRL)':77,'Solidez financeira':68,'Aderência Eco Invest':87,'Time e governança':81,'Impacto climático':73},prov:'investida Fundo I · 14 clientes · −12% energia'},
+{n:'CircuitSense',c:'IA',t:'Startup',uf:'MG',trl:6,capexN:25,s:'B',st:3,dims:{'Maturidade (TRL)':65,'Solidez financeira':45,'Aderência Eco Invest':83,'Time e governança':70,'Impacto climático':69},prov:'em pauta Fundo I (8,1) · piloto siderurgia'},
+{n:'AgriSat Analytics',c:'IA',t:'Scale-up',uf:'SP',trl:8,capexN:40,s:'B',st:2,dims:{'Maturidade (TRL)':84,'Solidez financeira':61,'Aderência Eco Invest':80,'Time e governança':75,'Impacto climático':72},prov:'investida Fundo I · 2,1 mi ha monitorados'},
+{n:'ThermoOpt',c:'IA',t:'Startup / ICT',uf:'SC',trl:5,capexN:18,s:'C',st:1,dims:{'Maturidade (TRL)':54,'Solidez financeira':33,'Aderência Eco Invest':77,'Time e governança':64,'Impacto climático':66},prov:'spin-off UFSC · 2 POCs papel e celulose'},
+{n:'PiroCycle',c:'Resíduos',t:'Scale-up',uf:'RJ',trl:6,capexN:140,s:'C',st:2,dims:{'Maturidade (TRL)':63,'Solidez financeira':50,'Aderência Eco Invest':82,'Time e governança':61,'Impacto climático':79},prov:'investida Fundo I · pendência CONEP'},
+{n:'ReMineral',c:'Resíduos',t:'Scale-up',uf:'MG',trl:6,capexN:220,s:'B',st:3,dims:{'Maturidade (TRL)':67,'Solidez financeira':59,'Aderência Eco Invest':88,'Time e governança':72,'Impacto climático':89},prov:'investida Fundo I · planta demo 40%'},
+{n:'UrbanComposta',c:'Resíduos',t:'Empresa madura',uf:'DF',trl:8,capexN:75,s:'B',st:2,dims:{'Maturidade (TRL)':83,'Solidez financeira':69,'Aderência Eco Invest':81,'Time e governança':74,'Impacto climático':77},prov:P+' · 6 contratos municipais · 180 t/dia'},
+{n:'EcoFibra Têxtil',c:'Resíduos',t:'Startup',uf:'SC',trl:5,capexN:28,s:'C',st:1,dims:{'Maturidade (TRL)':50,'Solidez financeira':37,'Aderência Eco Invest':76,'Time e governança':63,'Impacto climático':70},prov:'reciclagem têxtil · 1 pedido INPI · piloto moda'}
+];
+const stages=['Identificado','Elegível','Em qualificação','Qualificado','Apresentado ao banco','Em estruturação'];
+const stBadge=['bN','bN','bN','bI','bI','bP'];
+let funnel=[312,147,82,65,28,11];
+let curOpp=null,chainF='todas',sortKey=null,sortAsc=true;
+const chainColors={'Biometano':'#2E7D32','Fertilizantes':'#795548','Baterias':'#2563EB','Química':'#7C3AED','IA':'#374151','Resíduos':'#F59E0B'};
+function c1visible(){const q=(document.getElementById('c1search').value||'').toLowerCase();
+  return opps.filter(o=>(chainF==='todas'||o.c===chainF)&&(o.n.toLowerCase().includes(q)||o.uf.toLowerCase().includes(q)||o.t.toLowerCase().includes(q)||o.c.toLowerCase().includes(q)))}
+function c1render(){
+  let list=c1visible();
+  if(sortKey){list=[...list].sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(typeof x==='string')return sortAsc?x.localeCompare(y):y.localeCompare(x);return sortAsc?x-y:y-x})}
+  const tb=document.querySelector('#c1table tbody');tb.innerHTML='';
+  list.forEach(o=>{const tr=document.createElement('tr');tr.className='clickable';
+    tr.innerHTML='<td><b>'+o.n+'</b><br><span class="mini">'+o.t+'</span></td><td><span class="chainpill" style="background:'+chainColors[o.c]+'"></span>'+o.c+'</td><td>'+o.uf+'</td><td>'+o.trl+'</td><td>R$ '+o.capexN+' mi</td><td><span class="b b'+o.s+'">'+o.s+'</span></td><td><span class="b '+stBadge[o.st]+'">'+stages[o.st]+'</span></td>';
+    tr.onclick=()=>c1open(o);tb.appendChild(tr)});
+  document.getElementById('k_show').textContent=list.length;
+  const nA=list.filter(o=>o.s==='A').length,nB=list.filter(o=>o.s==='B').length;
+  document.getElementById('k_ab').textContent=nA+' / '+nB;
+  const cx=list.reduce((s,o)=>s+o.capexN,0);
+  document.getElementById('k_capex').textContent=cx>=1000?('R$ '+(cx/1000).toFixed(1).replace('.',',')+' bi'):('R$ '+cx+' mi');
+  const f=document.getElementById('funil');f.innerHTML='';
+  stages.forEach((s,i)=>{f.innerHTML+='<div class="fstep"><span>'+s+'</span><b>'+funnel[i]+'</b></div>'});
+  const cb=document.getElementById('chainbars');cb.innerHTML='';
+  Object.keys(chainColors).forEach(c=>{const t=opps.filter(o=>o.c===c).reduce((s,o)=>s+o.capexN,0);
+    cb.innerHTML+='<div class="barlbl"><span><span class="chainpill" style="background:'+chainColors[c]+'"></span>'+c+'</span><b>R$ '+(t/1000).toFixed(2).replace('.',',')+' bi</b></div><div class="bar"><i style="width:'+Math.round(t/2610*100)+'%;background:'+chainColors[c]+'"></i></div>'});
+}
+function c1sort(k){if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=true}c1render()}
+function c1filter(){c1render()}
+function c1chain(c,el){chainF=c;document.querySelectorAll('#c1chips .chip').forEach(x=>x.classList.remove('on'));el.classList.add('on');c1render()}
+function c1open(o){curOpp=o;document.getElementById('dTitle').textContent=o.n;
+  document.getElementById('dSub').textContent=o.t+' · '+o.uf+' · '+o.c+' · TRL '+o.trl+' · CAPEX R$ '+o.capexN+' mi · estágio: '+stages[o.st];
+  let d='';for(const[k,v]of Object.entries(o.dims)){d+='<div class="barlbl"><span>'+k+'</span><b>'+v+'/100</b></div><div class="bar"><i style="width:'+v+'%"></i></div>'}
+  document.getElementById('dDims').innerHTML=d;
+  document.getElementById('dProv').innerHTML=o.prov.split(' · ').map(x=>'• '+x).join('<br>');
+  document.getElementById('drawer').classList.add('open')}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open')}
+function c1advance(){if(!curOpp)return;if(curOpp.st>=5){toast('Já está no último estágio');return}
+  funnel[curOpp.st]--;curOpp.st++;funnel[curOpp.st]++;c1render();c1open(curOpp);
+  ledger('C1 · '+curOpp.n+' → '+stages[curOpp.st]+' (A. Souza)');
+  maestro('A1 → A0','avanço de funil: '+curOpp.n+' → '+stages[curOpp.st]+' (confirmado por humano)');
+  toast(curOpp.n+' avançou para: '+stages[curOpp.st])}
+function c1emitCaderno(){const h=fakeHash();
+  document.getElementById('cadres').innerHTML='<div class="sig" style="margin-top:14px"><div class="ic">✓</div><div><b>Caderno emitido!</b> preparado 🤖 A1 · assinado por humano<br><span class="hash">SHA-256: '+h.slice(0,4)+'…'+h.slice(4)+'</span> · ICP-Brasil · WORM</div></div>';
+  document.getElementById('c1sig').innerHTML='<div class="ic">✓</div><div><b>Último Caderno:</b> 03/07/2026 · 30 fichas · score v3.2<br><span class="hash">SHA-256: '+h.slice(0,4)+'…'+h.slice(4)+'</span> · ICP-Brasil · ledger #4.820</div>';
+  ledger('C1 · CADERNO emitido · preparado por A1 · assinatura humana');
+  maestro('A1 → A0','Caderno de Pipeline selado — artefato disponível para o modo proposta');
+  toast('Caderno emitido e selado — anexável à proposta do leilão')}
+
+/* ============ C2 ============ */
+function c2trl(){const a=r81.checked,b=r82.checked,c=r91.checked;let t=7;if(a&&b)t=8;if(a&&b&&c)t=9;return t}
+function c2calc(){const trl=c2trl();
+  const bar=document.getElementById('trlbar');bar.innerHTML='';
+  for(let i=1;i<=9;i++){const s=document.createElement('span');s.textContent=i;if(i<trl)s.className='on';if(i===trl)s.className='cur';bar.appendChild(s)}
+  document.getElementById('trltxt').textContent='TRL atual: '+trl;
+  const ins=riskInsumo.value,esc=riskEscala.value;
+  barInsumo.style.width=ins==='alto'?'85%':ins==='medio'?'68%':'25%';
+  barInsumo.style.background=ins==='baixo'?'':'var(--amber)';
+  barEscala.style.width=esc==='alto'?'75%':esc==='medio'?'45%':'20%';
+  let score=trl===9?95:trl===8?86:74;if(ins==='alto')score-=10;if(ins==='baixo')score+=4;if(esc==='alto')score-=8;if(esc==='baixo')score+=3;
+  const g=score>=90?'A':score>=82?'A−':score>=74?'B+':score>=66?'B':'C';
+  rating.textContent=g;
+  ratingsub.textContent=score>=82?'Pronto para estruturação':'Qualificação adicional recomendada';
+  c2warn.style.display=ins==='baixo'?'none':'block';
+  rating.parentElement.classList.add('pulse');setTimeout(()=>rating.parentElement.classList.remove('pulse'),2500)}
+function c2rev(){const ok=chkRev.checked;btnEmit.disabled=!ok;
+  tlRev.classList.toggle('pend',!ok);
+  tlRevD.textContent=ok?'01/07 · concluída · sem conflito':'pendente';
+  tlEmitD.textContent=ok?'liberada':'bloqueada até revisão';
+  if(ok)ledger('C2 · TEC-2026-041 · four-eyes concluído (P. Reis)')}
+function c2emit(){const h=fakeHash();const trl=c2trl();
+  tlEmit.classList.remove('pend');
+  tlEmitD.innerHTML='emitido · <span class="hash">SHA-256: '+h.slice(0,4)+'…'+h.slice(4)+'</span>';
+  document.getElementById('c2done').innerHTML='<div class="sig"><div class="ic">✍️</div><div><b>Parecer emitido:</b> rating '+rating.textContent+' · TRL '+trl+'<br>Assinaturas ICP-Brasil: C. Lima + P. Reis</div></div>';
+  ledger('C2 · PARECER emitido · rating '+rating.textContent+' · TRL '+trl);
+  maestro('A2 → A1, A4, A6','parecer BioMetano Sul (rating '+rating.textContent+') propagado: ficha C1 atualizada · memo C4 enriquecido · matchmaking C6 habilitado');
+  toast('Parecer assinado — A0 propagou a nota para C1, C4 e C6')}
+
+/* ============ C3 ============ */
+function c3julga(){const a=+n1.value||0,b=+n2.value||0,c=+n3.value||0;const m=((a+b+c)/3).toFixed(2);const ok=m>=7;
+  julgares.innerHTML='<div class="sig"><div class="ic">'+(ok?'✓':'✕')+'</div><div><b>Nota consolidada: '+m+'</b> · corte 7,00 → <b>'+(ok?'CLASSIFICADA':'não classificada')+'</b><br>Ata automática 🤖 A3 · notas preservadas</div></div>';
+  ledger('C3 · P-077 julgada · média '+m+' · ata gerada por A3',false);
+  toast('Julgamento consolidado — ata do A3 no ledger')}
+let aceiteOk=false;
+function c3aceite(){aceiteOk=true;tAceite.classList.remove('pend');
+  tAceiteD.textContent='03/07 · parecer favorável · evidências ok';
+  tDesembD.textContent='liberada pelo A3 — perfil autorizador distinto';
+  btnDesemb.disabled=false;btnAceite.disabled=true;
+  ledger('C3 · M3 ACEITE TÉCNICO (H. Nunes)');
+  toast('Aceite registrado — A3 desbloqueou o desembolso')}
+function c3desemb(){if(!aceiteOk)return;tDesemb.classList.remove('pend');
+  tDesembD.textContent='03/07 · R$ 1,4 mi · comprovante anexado';
+  btnDesemb.disabled=true;
+  k_des.textContent='R$ 28,8 mi';k_desp.textContent='33% · contra marco aceito';
+  m_marco.textContent='M4/6';m_fin.textContent='55%';
+  m_st.innerHTML='<span class="b bA">Em dia</span>';
+  ledger('C3 · DESEMBOLSO R$ 1,4 mi (M. Dias)');
+  maestro('A3 → A4, A5','marco M3 aceito+pago: sinergia atualizada no memo C4 da MetanoTech · polígono do projeto na vigilância A5');
+  toast('Desembolso executado — A0 propagou para C4 e C5')}
+
+/* ============ C4 ============ */
+function c4rec(){const v=c4sel.value;
+  rec1.innerHTML='<span class="b '+(v.startsWith('Desf')?'bD':'bA')+'">'+(v.startsWith('Desf')?'Desfavorável':'Favorável')+' · #4.821</span>';
+  btnRec.disabled=true;
+  c4done.innerHTML='<div class="sig"><div class="ic">📋</div><div><b>Recomendação registrada:</b> "'+v+'"<br>memo 🤖 A4 · validado e assinado pelo advisor humano</div></div>';
+  ledger('C4 · recomendação CONSULTIVA ElectraCell (P. Reis)');
+  toast('Recomendação registrada — decisão permanece com o comitê fiduciário')}
+function c4dec(d){dec1.innerHTML='<span class="b '+(d==='Aprovado'?'bA':'bD')+'">'+d+' pelo comitê</span>';
+  ledger('C4 · DECISÃO do comitê fiduciário: ElectraCell '+d);
+  maestro('A4 → A0','decisão do comitê registrada em trilha separada da recomendação (CVM 175)');
+  toast('Decisão registrada em trilha separada')}
+
+/* ============ C5 · dossiês MRV por operação ============ */
+const CG=[46,125,50],CA=[245,158,11],CB=[37,99,235];
+const OPS={
+'OP-0087':{tom:'BioMetano Sul',met:'mrv-biometano v2.0',center:[-52.915,-28.352],zoom:12,
+ lbls:['Biometano injetado (mi Nm³/ano)','Fator de emissão (t/1000 Nm³)','Fator de captura de metano'],
+ v:[21.5,1.96,1.14],extra:0.2,extralbl:'digestato',unc:'±6,5%',
+ det:{lbl:'Avanço biodigestor 3 — detecção 🤖 A5',ser:[12,27,41,55,64,71]},
+ poly:[0.085,0.055],alertPoly:null,
+ assets:[[-0.025,0.022,CG,'Biodigestor 1 · operacional','Última imagem 28/06 · 🤖 A5: sem alertas · telemetria ok'],
+  [0.015,-0.008,CG,'Biodigestor 2 · operacional','Vazão 210 Nm³/h · medidor calibrado · hash íntegro'],
+  [-0.040,-0.023,CA,'Biodigestor 3 · em obra (71%)','🤖 A5 detectou avanço 64%→71% no último ciclo · série anexada ao pacote'],
+  [0.035,0.022,CG,'Biodigestor 4 · operacional','Foto de campo georreferenciada validada (GPS + hash)'],
+  [0.045,0.002,CB,'Planta de purificação','96,8% CH₄ · certificado mensal da distribuidora conciliado']],
+ alert:{tit:'Alertas 🤖 A5 — OP-0087',body:'<div style="font-size:12px;line-height:1.7">🟢 <b>Sem alertas territoriais ativos.</b><br>Último ciclo Sentinel-2 (D-1): 5/5 ativos sem mudança anômala · embargos IBAMA: sem sobreposição · telemetria 99,4% disponível.</div>'}},
+'OP-0088':{tom:'AgroGás Coop.',met:'mrv-biometano v2.0',center:[-53.742,-24.724],zoom:11,
+ lbls:['Biometano injetado (mi Nm³/ano)','Fator de emissão (t/1000 Nm³)','Fator de captura de metano'],
+ v:[13.9,1.96,1.14],extra:0.0,extralbl:'',unc:'±8,0%',
+ det:{lbl:'Adesão de propriedades à rede — 🤖 A5',ser:[40,52,61,68,74,78]},
+ poly:[0.13,0.08],alertPoly:null,
+ assets:[[-0.05,0.03,CG,'Cluster oeste · 4 biodigestores','Operacional · vazão agregada 88 Nm³/h'],
+  [0.03,0.035,CG,'Cluster norte · 3 biodigestores','Operacional · medidores calibrados 05/2026'],
+  [0.055,-0.03,CA,'Cluster leste · 3 biodigestores em obra','Avanço 45% · 🤖 A5 acompanha por ciclo quinzenal'],
+  [-0.03,-0.035,CG,'Cluster sul · 2 biodigestores','Operacional · foto de campo validada'],
+  [0.0,0.0,CB,'Central de compressão e injeção','Ponto de medição fiscal · conciliação mensal']],
+ alert:{tit:'Alertas 🤖 A5 — OP-0088',body:'<div style="font-size:12px;line-height:1.7">🟢 <b>Sem alertas territoriais.</b><br>Nota do A5: incerteza ±8,0% acima da média da carteira — causa: medição distribuída em 12 pontos. Recomendação em estudo: telemetria unificada nos clusters (reduziria para ±6,5%).</div>'}},
+'OP-0090':{tom:'NitroVerde',met:'mrv-fertilizantes v1.3 (projetado)',center:[-38.32,-12.69],zoom:12,
+ lbls:['Amônia verde (kt/ano, projetado)','Fator de deslocamento (tCO₂e/t NH₃)','Fator de ajuste H₂ verde'],
+ v:[41.7,2.12,1.0],extra:0.0,extralbl:'',unc:'±7,5% (proj.)',
+ det:{lbl:'Avanço de terraplanagem e fundações — 🤖 A5',ser:[3,6,10,14,18,22]},
+ poly:[0.06,0.045],alertPoly:null,
+ assets:[[-0.018,0.012,CA,'Área do eletrolisador · obra 25%','Fundações concluídas · 🤖 A5: avanço compatível com cronograma'],
+  [0.015,0.010,CA,'Planta de síntese de amônia · obra 18%','Terraplanagem concluída · montagem prevista 4T/2026'],
+  [0.022,-0.015,CB,'Subestação e conexão','Energização prevista 09/2026 · contrato PPA eólico validado'],
+  [-0.020,-0.014,CG,'Canteiro e módulos administrativos','Licença de instalação vigente · condicionantes em dia']],
+ alert:{tit:'Alertas 🤖 A5 — OP-0090',body:'<div style="font-size:12px;line-height:1.7">🟢 <b>Sem alertas territoriais.</b> Operação em obra inicial (22%): indicador ktCO₂e é <b>projetado</b> — vira medido na entrada em operação.<br>🤖 A5 confere avanço físico declarado × detecção satelital a cada ciclo: <b>0 divergências</b> até aqui.</div>'}},
+'OP-0091':{tom:'Landfill Energy',met:'mrv-biometano v2.0 (aterro)',center:[-46.741,-23.362],zoom:13,
+ lbls:['Biometano injetado (mi Nm³/ano)','Fator de emissão (t/1000 Nm³)','Fator de captura de metano'],
+ v:[12.4,1.96,1.14],extra:0.0,extralbl:'',unc:'±5,9%',
+ det:{lbl:'Comissionamento da planta — 🤖 A5',ser:[60,68,75,82,87,91]},
+ poly:[0.035,0.028],alertPoly:null,
+ assets:[[-0.010,0.008,CG,'Célula do aterro · captação ativa','128 drenos conectados · vazão de biogás estável'],
+  [0.008,0.006,CA,'Planta de purificação · comissionamento 91%','Testes de performance em curso · 🤖 A5 acompanha semanalmente'],
+  [0.012,-0.008,CB,'Ponto de injeção na rede','Medidor fiscal instalado · aguarda selo ANP/distribuidora'],
+  [-0.012,-0.008,CG,'Flare de segurança','Operacional · queima de excedente monitorada']],
+ alert:{tit:'Alertas 🤖 A5 — OP-0091 · pré-operacional',body:'<div style="font-size:12px;line-height:1.7">📦 <b>Pacote de evidência do 2T pronto para selo</b> — todos os insumos íntegros (imagens + comissionamento + fotos de campo).<br><b>Ação sugerida pelo A5:</b> selar antes da entrada em operação para marcar a baseline.</div><div class="btnrow"><button class="btn" onclick="toast(&quot;Pacote 2T da OP-0091 selado — baseline pré-operacional registrada em WORM&quot;);ledger(&quot;C5 · pacote 2T OP-0091 selado (baseline pré-operacional)&quot;,true)">Aprovar selo do pacote 2T</button></div>'}},
+'OP-0092':{tom:'Usina Verde',met:'mrv-biometano v2.0 (vinhaça, projetado)',center:[-50.92,-17.79],zoom:12,
+ lbls:['Biometano projetado (mi Nm³/ano)','Fator de emissão (t/1000 Nm³)','Fator de captura de metano'],
+ v:[8.5,1.96,1.14],extra:0.0,extralbl:'',unc:'±9,2% (proj.)',
+ det:{lbl:'Avanço da obra — 🤖 A5',ser:[8,13,19,25,30,34]},
+ poly:[0.07,0.05],alertPoly:[0.045,-0.032,0.013,0.009],
+ assets:[[-0.020,0.015,CA,'Biodigestores de vinhaça · obra 40%','Estrutura civil em execução · 🤖 A5: ritmo compatível'],
+  [0.015,0.012,CA,'Planta de purificação · obra 28%','Equipamentos em fabricação · entrega prevista 10/2026'],
+  [-0.025,-0.018,CG,'Usina sucroenergética (âncora)','Fonte de vinhaça · safra 26/27 contratada'],
+  [0.020,-0.010,CB,'Futuro ponto de injeção','Traçado do gasoduto de conexão aprovado']],
+ alert:{tit:'⚠ Alerta 🤖 A5 — OP-0092 (protocolo D+1/D+5)',body:'<div style="font-size:12px;line-height:1.7">🛰️ <b>Supressão vegetal (2,3 ha)</b> a 400 m do polígono · imagem 29/06 · confiança do modelo: 88% · <b>veja o polígono vermelho tracejado no mapa</b>.<br>Status: tomador respondeu (D+3) alegando supressão autorizada · 🤖 A5 validando ASV no Sinaflor · embargos IBAMA: sem sobreposição.<br><b>Ação sugerida:</b> manter apuração aberta até validação da ASV.</div><div class="btnrow"><button class="btn amber" onclick="toast(&quot;Notificação formal enviada — prazo D+5 · evento no ledger · A0 avisado&quot;);ledger(&quot;C5 · OP-0092 notificação formal enviada (aprovação humana)&quot;)">Aprovar envio da notificação</button></div>'}},
+'OP-0093':{tom:'BioSolve',met:'mrv-quimica v1.1',center:[-47.153,-22.762],zoom:13,
+ lbls:['Solvente bio-based (kt/ano)','Fator de deslocamento (tCO₂e/t)','Fator de ajuste de rota'],
+ v:[9.8,1.30,0.95],extra:0.0,extralbl:'',unc:'±6,8%',
+ det:{lbl:'Retrofit da linha de produção — 🤖 A5',ser:[22,31,40,48,54,60]},
+ poly:[0.030,0.022],alertPoly:null,
+ assets:[[-0.008,0.006,CA,'Linha de solventes · retrofit 60%','Substituição de rota fóssil→bio-based · 🤖 A5 acompanha por fotos+satélite'],
+  [0.008,0.005,CG,'Unidade de biocatálise','Operacional desde 04/2026 · certificação ISCC+ vigente'],
+  [0.006,-0.007,CB,'Tancagem e expedição','Balanço de massa conciliado mensalmente pelo 🤖 A5'],
+  [-0.009,-0.006,CG,'ETE industrial','Condicionantes CETESB em dia']],
+ alert:{tit:'Alertas 🤖 A5 — OP-0093',body:'<div style="font-size:12px;line-height:1.7">🟢 <b>Sem alertas territoriais.</b><br>Particularidade: MRV industrial — o A5 concilia <b>balanço de massa</b> (notas fiscais + medições) com evidência visual do retrofit. Última conciliação: 30/06 · 0 divergências.</div>'}}
+};
+let curOp='OP-0087';
+function c5sel(op){curOp=op;const o=OPS[op];
+  document.querySelectorAll('#c5tab tr').forEach(r=>r.style.background='');
+  const row=document.getElementById('row-'+op);if(row)row.style.background='#F0F7F0';
+  document.getElementById('c5title').textContent=op+' · '+o.tom+' — monitoramento territorial';
+  document.getElementById('c5calctit').textContent=op+' · '+o.met;
+  document.getElementById('c5l1').textContent=o.lbls[0];document.getElementById('c5l2').textContent=o.lbls[1];document.getElementById('c5l3').textContent=o.lbls[2];
+  v1.value=o.v[0];v2.value=o.v[1];v3.value=o.v[2];
+  c5writeMemo(false);
+  document.getElementById('c5alerttit').innerHTML=o.alert.tit;
+  document.getElementById('c5alertbody').innerHTML=o.alert.body;
+  document.getElementById('c5detlbl').textContent=o.det.lbl;
+  const bars=document.getElementById('c5detbars');bars.innerHTML='';
+  const sh=['#C8E6C9','#A5D6A7','#81C784','#66BB6A','#4CAF50','#2E7D32'];
+  o.det.ser.forEach((x,i)=>{bars.innerHTML+='<div style="flex:1;height:38px;background:'+sh[i]+';border-radius:4px;display:flex;align-items:end;justify-content:center;font-size:9px;'+(i>2?'color:#fff':'')+'">'+x+'%</div>'});
+  drawOp(op);
+  if(gisReady){ledger('C5 · dossiê '+op+' ('+o.tom+') aberto · mapa recentralizado',true)}}
+function c5writeMemo(fresh){const o=OPS[curOp];const a=+v1.value||0,b=+v2.value||0,c=+v3.value||0;
+  const e=(a*b*c);const tot=(e+o.extra).toFixed(1).replace('.',',');
+  c5memo.innerHTML='<b>Memória ('+o.met+'):</b><br>E = '+String(a).replace('.',',')+' × '+String(b).replace('.',',')+' × '+String(c).replace('.',',')+' = <b>'+e.toFixed(1).replace('.',',')+' ktCO₂e</b>'+(o.extra?' (+'+String(o.extra).replace('.',',')+' '+o.extralbl+')':'')+' = <b>'+tot+' '+o.unc+'</b><br><span class="hash">'+(fresh?'🤖 A5 recalculou '+now()+' · reprodutível':'insumos íntegros (hash ok) · J. Prado')+'</span>'}
+function c5calc(){c5writeMemo(true);const o=OPS[curOp];
+  ledger('C5 · '+curOp+' recalculado ('+o.met+')',true);
+  toast('Recalculado pelo A5 — mesma entrada + mesma versão = mesmo resultado')}
+function c5pac(){const k=document.getElementById('k_pac');k.textContent=parseInt(k.textContent)+1;
+  ledger('C5 · pacote de evidência '+curOp+' selado · WORM + ICP-Brasil (aprovação humana)');
+  maestro('A5 → A0','pacote de evidência da '+curOp+' disponível para relatório circunstanciado');
+  toast('Pacote da '+curOp+' selado — versão anterior preservada')}
+
+/* ============ ARCGIS MAPS SDK + LIVING ATLAS ============ */
+let gisLayers={},gisView=null,gisReady=false,gisMods=null,gisStarted=false;
+function toggleLyr(k,v){if(gisLayers[k])gisLayers[k].visible=v;if(gisReady)ledger('C5 · camada "'+k+'" '+(v?'ativada':'desativada')+' no visualizador GIS',true)}
+function drawOp(op){if(!gisMods||!gisLayers.mon)return;const M=gisMods;const o=OPS[op];
+  gisLayers.mon.removeAll();
+  const cx=o.center[0],cy=o.center[1],w=o.poly[0],h=o.poly[1];
+  gisLayers.mon.add(new M.Graphic({geometry:{type:"polygon",rings:[[[cx-w,cy+h],[cx+w,cy+h],[cx+w,cy-h],[cx-w,cy-h],[cx-w,cy+h]]]},
+    symbol:{type:"simple-fill",color:[46,125,50,0.08],outline:{color:[27,94,32,0.9],width:2}},
+    attributes:{nome:"Polígono financiado "+op,det:o.tom+" · vigilância territorial 🤖 A5 · ciclo Sentinel-2 D-1"},
+    popupTemplate:{title:"{nome}",content:"{det}"}}));
+  if(o.alertPoly){const ax=cx+o.alertPoly[0],ay=cy+o.alertPoly[1],aw=o.alertPoly[2],ah=o.alertPoly[3];
+    gisLayers.mon.add(new M.Graphic({geometry:{type:"polygon",rings:[[[ax-aw,ay+ah],[ax+aw,ay+ah],[ax+aw,ay-ah],[ax-aw,ay-ah],[ax-aw,ay+ah]]]},
+      symbol:{type:"simple-fill",color:[220,38,38,0.25],outline:{color:[220,38,38,1],width:2,style:"dash"}},
+      attributes:{nome:"⚠ Mudança de cobertura detectada (2,3 ha)",det:"Detecção 🤖 A5 por diferença espectral entre ciclos Sentinel-2 · confiança 88% · protocolo D+1/D+5 em curso"},
+      popupTemplate:{title:"{nome}",content:"{det}"}}))}
+  o.assets.forEach(p=>gisLayers.mon.add(new M.Graphic({geometry:{type:"point",longitude:cx+p[0],latitude:cy+p[1]},
+    symbol:{type:"simple-marker",size:13,color:p[2],outline:{color:[255,255,255],width:2}},
+    attributes:{nome:p[3],det:p[4]},popupTemplate:{title:"{nome}",content:"{det}"}})));
+  if(gisView)gisView.goTo({center:o.center,zoom:o.zoom},{duration:1200}).catch(()=>{})}
+function initGIS(){
+ if(gisStarted||typeof require==='undefined')return;gisStarted=true;
+ try{
+ require(["esri/Map","esri/views/MapView","esri/layers/ImageryLayer","esri/layers/FeatureLayer","esri/layers/GraphicsLayer","esri/Graphic","esri/widgets/Legend","esri/widgets/Expand","esri/widgets/ScaleBar","esri/widgets/BasemapToggle"],
+ function(Map,MapView,ImageryLayer,FeatureLayer,GraphicsLayer,Graphic,Legend,Expand,ScaleBar,BasemapToggle){
+  gisMods={Graphic:Graphic};
+  const lulc=new ImageryLayer({portalItem:{id:"cfcb7609de5f478eb7666240902d4d3d"},title:"Sentinel-2 10m Land Use/Land Cover — Living Atlas",opacity:0.45,visible:document.getElementById('lyrLULC').checked});
+  const fire=new FeatureLayer({portalItem:{id:"dece90af1a0242dcbf0ca36d30276aa3"},title:"Focos térmicos VIIRS (últimas 48h) — Living Atlas",visible:document.getElementById('lyrFire').checked});
+  lulc.load().catch(e=>{console.warn("LULC",e);const c=document.getElementById('lyrLULC');if(c){c.checked=false;c.disabled=true}});
+  fire.load().catch(e=>{console.warn("VIIRS",e);const c=document.getElementById('lyrFire');if(c){c.checked=false;c.disabled=true}});
+  const mon=new GraphicsLayer({title:"Ativos monitorados (A5)"});
+  gisLayers={lulc:lulc,fire:fire,mon:mon};
+  const node=document.getElementById('arcgisMap');node.innerHTML='';
+  const map=new Map({basemap:"hybrid",layers:[lulc,fire,mon]});
+  gisView=new MapView({container:"arcgisMap",map:map,center:OPS[curOp].center,zoom:OPS[curOp].zoom,constraints:{minZoom:4}});
+  gisView.ui.add(new Expand({view:gisView,content:new Legend({view:gisView}),expandTooltip:"Legenda"}),"bottom-left");
+  gisView.ui.add(new ScaleBar({view:gisView,unit:"metric"}),"bottom-right");
+  gisView.ui.add(new BasemapToggle({view:gisView,nextBasemap:"topo-vector"}),"top-right");
+  gisView.when(()=>{gisReady=true;drawOp(curOp);
+    ledger('C5 · visualizador GIS iniciado · World Imagery + 2 camadas Living Atlas',true);
+    maestro('A5 → A0','geovisualização ativa: Sentinel-2 LULC 10m e VIIRS conectados à carteira MRV');
+    toast('Mapa ArcGIS carregado — clique nas operações da carteira para navegar')});
+ });}catch(e){document.getElementById('arcgisMap').textContent='ArcGIS SDK indisponível: '+e;gisStarted=false}}
+/* inicializa o mapa somente quando a tela C5 está visível (senão o container tem tamanho zero) */
+const _goOrig=go;
+window.go=function(id,el){_goOrig(id,el);if(id==='c5')gisBoot()};
+let _gisTimer=null;
+function gisBoot(){
+ if(gisReady||_gisTimer)return;
+ let tries=0;
+ _gisTimer=setInterval(function(){
+  tries++;
+  const n=document.getElementById('arcgisMap');
+  if(!n||gisReady){clearInterval(_gisTimer);_gisTimer=null;return}
+  const visible=(n.offsetParent!==null)&&n.clientWidth>50;
+  if(typeof require!=='undefined'&&visible&&!gisStarted){clearInterval(_gisTimer);_gisTimer=null;initGIS();return}
+  if(typeof require==='undefined'&&tries%15===0){n.textContent='⏳ baixando ArcGIS Maps SDK ('+Math.round(tries/5)+'s)… requer acesso a js.arcgis.com'}
+  if(tries>300){clearInterval(_gisTimer);_gisTimer=null;
+   n.innerHTML='⚠️ Não foi possível carregar o ArcGIS SDK. Verifique a internet e <button class=\'btn\' onclick=\'gisStarted=false;gisBoot()\'>tente novamente</button>'}
+ },200)}
+window.addEventListener('load',function(){var s=document.getElementById('c5');if(s&&s.classList.contains('active'))gisBoot()});
+
+/* ============ C6 ============ */
+let mmStep=0;
+function c6match(){
+  if(mmStep===0){mmStep=1;newEdge.style.display='block';
+    document.querySelector('#mm1 td:last-child').innerHTML='<button class="btn amber" style="padding:5px 12px" onclick="c6match()">Assinar MOU</button>';
+    c6tl.insertAdjacentHTML('afterbegin','<div class="tli" id="mmtl"><b>Conexão proposta 🤖 A6</b> — Fundo I × MetanoTech<div class="d">opt-in duplo registrado · em negociação</div></div>');
+    ledger('C6 · matchmaking aceito: Fundo I ⇄ MetanoTech',true);
+    toast('Conexão criada — racional do A6: nota C2 7,8 anexada')}
+  else if(mmStep===1){mmStep=2;newEdge.style.strokeDasharray='none';newEdge.setAttribute('stroke','#A5D6A7');
+    document.querySelector('#mm1 td:last-child').innerHTML='<span class="b bA">MOU assinado ✓</span>';
+    mmtl.innerHTML='<b>MOU de investimento</b> — Fundo I × MetanoTech<div class="d">assinado ICP-Brasil · 03/07</div>';
+    k_mous.textContent='24';
+    ledger('C6 · MOU ASSINADO: Fundo I × MetanoTech');
+    maestro('A6 → A1','MOU assinado: ficha da MetanoTech no pipeline ganha atributo "acordo vigente"');
+    toast('MOU assinado — A0 propagou o atributo para o pipeline')}
+}
+
+/* ============ CAMADA AGÊNTICA REALTIME ============ */
+const AGENTS={
+ c1:{name:'A1 · PROSPECTOR',st:'varrendo INPI · ANP · IBAMA · CVM · diários oficiais',ev:[
+  ['Varredura INPI concluída','2 novas patentes na cadeia biometano · 1 relevante para MetanoTech'],
+  ['Radar +1','nova organização identificada: BioFert Cerrado (MT) · triagem de elegibilidade iniciada'],
+  ['Score recalculado','Landfill Energy BR: solidez financeira 62→67 após série A confirmada'],
+  ['Procedência atualizada','14 fichas re-verificadas contra Receita Federal · 0 divergências'],
+  ['Deduplicação','“GásVerde SP Ltda” unificada com “GásVerde Paulista” (mesmo CNPJ raiz)'],
+  ['Monitor de licenças','SEMAD-GO: licença prévia da Usina Verde publicada no diário de hoje'],
+  ['Triagem de integridade','96 sócios verificados no lote noturno · 0 novas restrições']],
+ rec:[
+  {t:'Recomendo avançar NitroVerde Amônia → Qualificado',d:'EIA/RIMA protocolado + score A estável há 60 dias · justificativa completa anexada',fn:'recA1'},
+  {t:'Sugiro rebaixar Pecuária Circular Norte C→C−',d:'certidão estadual vencida há 15 dias · aguarda confirmação humana',fn:'recGen'}]},
+ c2:{name:'A2 · EXAMINER',st:'indexando evidências · gerindo four-eyes · SLA D-3',ev:[
+  ['Evidência indexada','laudo de eficiência energética vinculado ao critério TRL8-b do caso #041'],
+  ['Lacuna detectada','caso #042 (NitroVerde): critério “escala industrial” sem evidência-suporte'],
+  ['Sorteio concluído','caso #044: revisora Dra. M. Ohara · grafo de conflitos limpo ✓'],
+  ['SLA','caso #041 em D-3 · lembrete enviado à revisora P. Reis'],
+  ['IA assistiva','3 trechos sugeridos no rascunho do caso #043 · aguardando validação humana'],
+  ['Hash verificado','42/42 evidências do caso #041 íntegras desde a chegada']],
+ rec:[
+  {t:'Caso #044: solicitar ao proponente o relatório de 12 meses de operação',d:'sem ele, o critério TRL8-a ficará sem lastro — pedir agora evita estourar o SLA',fn:'recA2'}]},
+ c3:{name:'A3 · GRANTMASTER',st:'triando Chamada 03 · vigiando físico×financeiro · trava SoD ativa',ev:[
+  ['Triagem Chamada 03','+3 propostas recebidas · 2 aprovadas na elegibilidade objetiva · 1 com pendência documental (notificada, prazo de recurso aberto)'],
+  ['Impedimento aplicado','avaliador X removido da proposta #P-102: mesma instituição do proponente'],
+  ['Conciliação','projeto Embrapa: desvio físico×financeiro persiste em 6% · dentro do limiar de alerta'],
+  ['Distribuição cega','5 propostas roteadas para 15 avaliadores · nenhum vê a identidade dos pares'],
+  ['Bloqueio mantido','PiroCycle: desembolsos suspensos até resolução CONEP · sem override'],
+  ['Painel público','atualizado automaticamente: 82→85 propostas na Chamada 03']],
+ rec:[
+  {t:'Inabilitar 2 propostas da Chamada 03 por falha documental objetiva',d:'checklist reprovado (falta certidão + orçamento fora do teto) · notificação com prazo de recurso pronta',fn:'recA3'}]},
+ c4:{name:'A4 · ADVISOR',st:'monitorando 8 investidas · pauta 08/07 entregue D-5',ev:[
+  ['Sinal de portfólio','ReMineral: obra da planta demo retomou ritmo · 🟡 mantido, tendência 🟢'],
+  ['Evento externo','ElectraCell citada em edital de OEM europeia como fornecedora em qualificação'],
+  ['Memo atualizado','CircuitSense: piloto Gerdau atingiu −8% de consumo · memo #4.818 enriquecido'],
+  ['Vigilância CVM 175','0 tentativas de ação decisória por perfis consultivos neste ciclo'],
+  ['Acompanhamento','LithiumLoop: CETESB pediu complementação · impacto de 3 semanas estimado'],
+  ['Pauta','materiais do comitê 08/07 completos · 4 memos · antecedência D-5 ✓']],
+ rec:[
+  {t:'Convocar revisão extraordinária da PiroCycle (sinal 🔴)',d:'replanejamento do scale-up + bloqueio C3 simultâneo · recomendo pauta dedicada antes do comitê',fn:'recA4'}]},
+ c5:{name:'A5 · SENTINEL',st:'novo ciclo Sentinel-2 em processamento · 6 polígonos',ev:[
+  ['Ciclo processado','OP-0087: 5/5 pontos sem mudança anômala · biodigestor 3 avançou 71→73%'],
+  ['Medidores','OP-0091: 96h de telemetria recebidas · hash ok · disponibilidade 99,2%'],
+  ['Camadas públicas','embargos IBAMA atualizados · nenhuma sobreposição com polígonos financiados'],
+  ['OP-0092','tomador respondeu à notificação (D+3): alega supressão autorizada · validando ASV no Sinaflor'],
+  ['Recálculo automático','OP-0088: novo mês de injeção → 31,0→31,4 ktCO₂e ±8,0% · memória atualizada'],
+  ['Foto de campo','OP-0090: 3 fotos georreferenciadas validadas (GPS+hash) contra imagem de satélite']],
+ rec:[
+  {t:'Selar pacote de evidência do 2T da OP-0091 (pré-operacional)',d:'todos os insumos íntegros · pacote pronto · requer sua aprovação (N5)',fn:'recA5'}]},
+ c6:{name:'A6 · WEAVER',st:'recalculando afinidades · 2 minutas paradas em cobrança',ev:[
+  ['Afinidade recalculada','nota C2 da BioSolve elevou o score do par BioSolve ⇄ Trading agro para 0,81'],
+  ['CLM','minuta Distribuidora × AgroGás parada há 16 dias · lembrete enviado às partes'],
+  ['Exclusividade','term sheet Trading × NitroVerde vence em 41 dias · alerta agendado para D-15'],
+  ['Novo ator','VC clean-tech europeu registrou interesse na cadeia baterias (opt-in completo)'],
+  ['Métricas de rede','densidade 0,31 → 0,32 após MOU Embrapa×UFSC entrar em vigência'],
+  ['Agenda','rodada de baterias 15/07: 22 confirmados · A6 sugeriu 14 pares de reunião']],
+ rec:[
+  {t:'Propor conexão ITA ⇄ CircuitSense',d:'gêmeo digital + tese em pauta no Fundo I · afinidade 0,78 · opt-in de ambos vigente',fn:'recA6'}]},
+ a0:{name:'A0 · MAESTRO',st:'roteando eventos · monitorando SLA da frota',ev:[
+  ['Heartbeat','7/7 agentes respondendo · latência média do bus: 180ms'],
+  ['Contrato de dados','propagação dados-parecer-v1 auditada · 100% conforme'],
+  ['Verificação','ledger íntegro · última âncora externa 06:00'],
+  ['Calendário do leilão','D-45 para a data-corte estimada · checklist do modo proposta: 82% pronto']],rec:[]}
+};
+let curAg='c1',recPend=3,evd=0;
+function switchAgent(id){curAg=AGENTS[id]?id:curAg;const a=AGENTS[curAg];
+  document.getElementById('dhName').textContent=a.name;
+  document.getElementById('dhSt').textContent=a.st;
+  document.getElementById('dockAg').textContent=a.name.split(' ')[0];
+  document.getElementById('dockFeed').innerHTML='';
+  feedIdx=0;recIdx=0;pushEvent(true)}
+let feedIdx=0,recIdx=0;
+function pushEvent(fast){const a=AGENTS[curAg];if(!a)return;
+  const ty=document.getElementById('dockTyping');ty.style.display='flex';
+  setTimeout(()=>{ty.style.display='none';
+    const feed=document.getElementById('dockFeed');
+    const isRec=(feedIdx>0&&feedIdx%3===0&&a.rec.length>0);
+    if(isRec){const r=a.rec[recIdx%a.rec.length];recIdx++;
+      const d=document.createElement('div');d.className='fev rec';
+      d.innerHTML='<div class="ft">💡 recomendação · aguarda humano</div><b>'+r.t+'</b><div class="fd">'+r.d+'</div><div class="recbtns"><button class="ok" onclick="recAct(this,\''+r.fn+'\')">✓ Aceitar</button><button class="no" onclick="recRej(this)">Rejeitar</button></div>';
+      feed.prepend(d);recPend++;updBadge()}
+    else{const e=a.ev[feedIdx%a.ev.length];
+      const d=document.createElement('div');d.className='fev';
+      d.innerHTML='<div class="ft">'+e[0]+' · '+now()+'</div>'+e[1];
+      feed.prepend(d)}
+    feedIdx++;evd++;const k=document.getElementById('k_evd');if(k)k.textContent=evd;
+    while(feed.children.length>9)feed.removeChild(feed.lastChild);
+  },fast?400:1400)}
+function updBadge(){document.getElementById('dockBadge').textContent=recPend;const k=document.getElementById('k_rec');if(k)k.textContent=recPend}
+function recRej(btn){const card=btn.closest('.fev');card.style.opacity=.45;btn.parentElement.innerHTML='<span class="mini">rejeitada — motivo solicitado · registrado no ledger</span>';recPend=Math.max(0,recPend-1);updBadge();ledger('Recomendação de agente REJEITADA por humano (motivo registrado)',true)}
+function recAct(btn,fn){const card=btn.closest('.fev');btn.parentElement.innerHTML='<span class="mini" style="color:var(--green);font-weight:700">✓ aceita — executando…</span>';recPend=Math.max(0,recPend-1);updBadge();
+  if(fn==='recA1'){const o=opps.find(x=>x.n.startsWith('NitroVerde'));if(o&&o.st<5){funnel[o.st]--;o.st++;funnel[o.st]++;c1render()}ledger('A1 · avanço NitroVerde ACEITO por A. Souza',true);maestro('A1 → A0','avanço recomendado por agente, confirmado por humano: NitroVerde → '+stages[o.st]);toast('NitroVerde avançou no funil — recomendação do A1 aceita por humano')}
+  else if(fn==='recA2'){ledger('A2 · solicitação de evidência TRL8 enviada ao proponente',true);toast('Solicitação enviada — SLA do caso preservado')}
+  else if(fn==='recA3'){const k=document.getElementById('k_props');k.textContent='83';document.getElementById('k_imp').textContent='15';ledger('A3 · 2 propostas inabilitadas (falha objetiva) · recurso aberto',true);toast('Inabilitação executada com notificação e prazo de recurso — tudo no ledger')}
+  else if(fn==='recA4'){ledger('A4 · revisão extraordinária PiroCycle convocada (advisor aprovou)',true);maestro('A4 → A3','revisão extraordinária PiroCycle: status do bloqueio C3 anexado ao material');toast('Revisão extraordinária convocada — material sendo compilado pelo A4')}
+  else if(fn==='recA5'){document.getElementById('k_pac').textContent='24';ledger('C5 · pacote 2T OP-0091 selado · aprovação humana + preparo A5',true);maestro('A5 → A0','pacote OP-0091 disponível para relatório circunstanciado');toast('Pacote selado em WORM — preparado pelo A5, aprovado por você')}
+  else if(fn==='recA6'){ledger('A6 · conexão ITA ⇄ CircuitSense proposta (opt-in duplo)',true);maestro('A6 → A4','conexão ITA⇄CircuitSense anexada como sinergia ao memo em pauta');toast('Conexão proposta — racional e afinidade 0,78 anexados')}
+  else{ledger('Recomendação de agente aceita por humano',true);toast('Ação registrada')}}
+
+/* fleet + maestro */
+const FLEET=[
+ ['A1','PROSPECTOR','C1 Pipeline','#2E7D32','N5',['varrendo INPI…','recalculando scores…','triagem de integridade…','deduplicando entidades…']],
+ ['A2','EXAMINER','C2 Avaliação','#2563EB','N4',['indexando evidências…','checando conflitos…','vigiando SLAs…','pré-preenchendo rubrica…']],
+ ['A3','GRANTMASTER','C3 Fomento','#F59E0B','N3/N4',['triando propostas…','conciliando físico×financeiro…','mantendo trava SoD…','atualizando painel público…']],
+ ['A4','ADVISOR','C4 Fundos','#455A64','N4',['monitorando portfólio…','compondo memos…','priorizando pauta…','vigiando eventos externos…']],
+ ['A5','SENTINEL','C5 MRV','#0D9488','N5',['processando Sentinel-2…','validando medidores…','recalculando indicadores…','checando embargos…']],
+ ['A6','WEAVER','C6 Ecossistema','#7C3AED','N4',['recalculando afinidades…','cobrando minutas…','vigiando exclusividades…','montando agendas…']]];
+function buildFleet(){const f=document.getElementById('fleet');let h='<div class="acard a0"><span class="alevel">N3 · orquestrador</span><div class="an">🤖 A0 · MAESTRO</div><div class="am">barramento de eventos · contratos de dados · painel do consórcio</div><div class="ast" id="ast_a0"><i>roteando eventos da frota…</i></div><div class="ahb" id="hb_a0">heartbeat —</div></div>';
+  FLEET.forEach(a=>{h+='<div class="acard"><span class="alevel">'+a[4]+'</span><div class="an" style="color:'+a[3]+'">🤖 '+a[0]+' · '+a[1]+'</div><div class="am">'+a[2]+'</div><div class="ast" id="ast_'+a[0]+'"><i>'+a[5][0]+'</i></div><div class="ahb" id="hb_'+a[0]+'">heartbeat —</div></div>'});
+  h+='<div class="acard" style="grid-column:span 2;border-style:dashed"><div class="an" style="color:var(--gray)">⏸ Kill switch</div><div class="am">pausar qualquer agente sem parar o módulo</div><div class="ast mini">modo manual documentado assume · nenhum fluxo depende do agente para existir</div></div><div class="acard" style="grid-column:span 2;border-style:dashed"><div class="an" style="color:var(--gray)">📊 Avaliação contínua</div><div class="am">amostragem semanal por humanos</div><div class="ast mini">drift abaixo do limiar → autonomia rebaixada automaticamente</div></div>';
+  f.innerHTML=h}
+const PROPS=[
+ ['A5 → A0 · telemetria','OP-0091: 96h de dados de medidores validados · indicador re-selado'],
+ ['A1 → A6 · novo ator','BioFert Cerrado entrou no radar → candidata ao grafo (aguarda opt-in)'],
+ ['A2 → A1 · dados-parecer-v1','lacuna do caso #042 refletida como pendência na ficha NitroVerde'],
+ ['A3 → A4 · sinergia','marco do projeto nióbio (C3) anexado ao memo ElectraCell'],
+ ['A6 → A1 · atributo','MOU Embrapa×UFSC vigente → fichas ganham “acordo ICT ativo”'],
+ ['A5 → banco · prioridade','OP-0092: resposta do tomador em validação no Sinaflor · prazo D+5 corre'],
+ ['A0 → frota · saúde','verificação horária: 7/7 agentes ok · 0 propagações fora de contrato']];
+let propIdx=0;
+function maestro(from,msg){const log=document.getElementById('proplog');if(!log)return;
+  const d=document.createElement('div');d.className='prop';
+  d.innerHTML='<div class="pf">'+from+'</div>'+msg+'<div class="pd">'+now()+' · actor_type: agent · contrato ok</div>';
+  log.prepend(d);while(log.children.length>10)log.removeChild(log.lastChild);
+  const t=document.getElementById('tick');if(t)t.textContent=from+' — '+msg.slice(0,90);
+  const k=document.getElementById('k_prop');if(k)k.textContent=parseInt(k.textContent)+1;
+  sparkFly()}
+const NPOS={A1:[0.5,0.12],A2:[0.85,0.25],A3:[0.85,0.75],A4:[0.5,0.9],A5:[0.15,0.75],A6:[0.15,0.25]};
+function sparkFly(){const s=document.getElementById('spark');const bv=document.getElementById('busvis');if(!s||!bv)return;
+  const keys=Object.keys(NPOS);const from=NPOS[keys[Math.floor(Math.random()*6)]];
+  const W=bv.clientWidth,H=bv.clientHeight;
+  s.style.transition='none';s.style.opacity='1';s.style.left=(from[0]*W-6)+'px';s.style.top=(from[1]*H-6)+'px';
+  setTimeout(()=>{s.style.transition='all 1.1s ease-in-out';s.style.left=(W/2-6)+'px';s.style.top=(H/2-6)+'px'},60);
+  setTimeout(()=>{const to=NPOS[keys[Math.floor(Math.random()*6)]];s.style.left=(to[0]*W-6)+'px';s.style.top=(to[1]*H-6)+'px'},1250);
+  setTimeout(()=>{s.style.opacity='0'},2400)}
+function fleetLoop(){FLEET.forEach(a=>{const el=document.getElementById('ast_'+a[0]);const hb=document.getElementById('hb_'+a[0]);
+    if(el){el.innerHTML='<i>'+a[5][Math.floor(Math.random()*a[5].length)]+'</i>'}
+    if(hb){hb.textContent='heartbeat '+now()+' · ok'}});
+  const h0=document.getElementById('hb_a0');if(h0)h0.textContent='heartbeat '+now()+' · bus 180ms';
+}
+setInterval(fleetLoop,3000);
+setInterval(()=>{const p=PROPS[propIdx%PROPS.length];propIdx++;maestro(p[0],p[1])},9000);
+setInterval(()=>pushEvent(false),6500);
+setTimeout(()=>{const s=document.getElementById('c2sorteio');if(s)s.innerHTML='M. Ohara · sem conflito ✓ <span class="mini">(🤖 A2)</span>'},12000);
+setInterval(()=>{if(Math.random()<0.35){const k=document.getElementById('k_radar');k.textContent=parseInt(k.textContent)+1;document.getElementById('k_radars').textContent='+'+(19+Math.floor(evd/4))+' esta semana · 🤖 A1'}},11000);
+
+
+/* init */
+buildFleet();c1render();
+r81.checked=true;r82.checked=true;c2calc();
+
+/* ============ MODAL DE DETALHES (C2/C3/C4/C6) ============ */
+function dmOpen(t,s,b){document.getElementById('dmT').innerHTML=t;document.getElementById('dmS').innerHTML=s;document.getElementById('dmB').innerHTML=b;document.getElementById('dm').style.display='flex'}
+function dmClose(){document.getElementById('dm').style.display='none'}
+function kv(rows){let h='<table style="width:100%;border-collapse:collapse">';rows.forEach(r=>{h+='<tr><td style="padding:5px 8px;border-bottom:1px solid #EEF2EE;color:#6B7280;white-space:nowrap;vertical-align:top;width:37%">'+r[0]+'</td><td style="padding:5px 8px;border-bottom:1px solid #EEF2EE">'+r[1]+'</td></tr>'});return h+'</table>'}
+
+const C2CASES={
+'041':{t:'#TEC-2026-041 · BioMetano Sul S.A.',s:'Biometano · upgrading PSA/membranas · SLA D-3 · Em revisão (four-eyes)',b:kv([
+ ['Evidências (🤖 A2)','42 classificadas: 9 laudos · 6 patentes/PI · 11 contratos/atestados · 16 telemetria/fotos georref.'],
+ ['Rubrica TRL','TRL≤7 validado (9 evidências) · TRL8: 2 laudos-suporte aguardando validação humana · TRL9: lacuna apontada pelo A2'],
+ ['Risco tecnológico','Dependência de membranas importadas: média-alta · mitigação: projeto C3 de purificação criogênica (UFSC)'],
+ ['Four-eyes','Responsável: C. Lima → Revisor: P. Reis (sorteio A2 · grafo: 0 coautorias, 0 vínculos societários)'],
+ ['Trechos IA assistiva','12/12 validados pelo responsável · registro trecho a trecho no ledger'],
+ ['Próximo passo','Revisor conclui → dupla assinatura ICP-Brasil → A0 propaga a nota para C1 e C4']])},
+'042':{t:'#TEC-2026-042 · NitroVerde Amônia',s:'Fertilizantes verdes · amônia via H₂ verde · SLA D-7 · Em elaboração',b:kv([
+ ['Evidências (🤖 A2)','28 classificadas: FEED, contrato EPC, licença de instalação, PPA eólico (minuta)'],
+ ['Rubrica TRL','TRL 6 consolidado · TRL7 depende do comissionamento do eletrolisador piloto'],
+ ['Lacunas (🤖 A2)','① certificado de performance do eletrolisador · ② PPA firmado (hoje em minuta) — solicitação enviada ao proponente D-9'],
+ ['Four-eyes','Responsável: M. Ohara → Revisor: R. Fontes (sem conflito ✓)'],
+ ['Contexto (A0)','Vinculado à OP-0090 (C5) — obra 22% · avanço físico validado por satélite · off-take em negociação no C6 (Trading agro)'],
+ ['Próximo passo','Fechar lacunas → marcar rubrica → revisão']])},
+'043':{t:'#TEC-2026-043 · ElectraCell',s:'Baterias · cátodos LFP nacionais · SLA D-9 · Em elaboração',b:kv([
+ ['Evidências (🤖 A2)','35 classificadas · busca de anterioridade INPI/WIPO anexada automaticamente: FTO ok'],
+ ['Rubrica TRL','TRL 7 · linha piloto 200 t/ano em operação assistida'],
+ ['Risco-chave','Qualificação junto a OEMs: 18–24 meses · evidência mitigadora: cartas de intenção de 2 montadoras'],
+ ['Four-eyes','Responsável: P. Reis → Revisor: C. Lima (sem conflito ✓)'],
+ ['Dependência (A0)','Parecer aguardado pelo C4 — ElectraCell é a oportunidade #1 da pauta de 08/07'],
+ ['Próximo passo','Concluir matriz de risco → revisão → emissão antes do comitê']])},
+'044':{t:'#TEC-2026-044 · PiroCycle',s:'Resíduos · pirólise de plásticos · SLA D-12 · Coleta de evidências',b:kv([
+ ['Evidências (🤖 A2)','14 recebidas de ~30 estimadas · A2 emitiu checklist de faltantes ao proponente'],
+ ['Sorteio de revisor','🤖 Em curso: 2 candidatos impedidos pelo grafo (coautoria 2023; mesmo departamento) · 3º candidato em verificação'],
+ ['⚠ Flag propagada (A0)','Projeto C3 correlato com desembolsos bloqueados (pendência CONEP) · investida C4 com sinal 🔴 — contexto anexado ao caso'],
+ ['Rubrica TRL','Pré-preenchimento suspenso até evidências mínimas'],
+ ['Próximo passo','Completar coleta → designar revisor sem conflito → elaboração']])}};
+function c2case(k){const c=C2CASES[k];dmOpen(c.t,c.s,c.b);ledger('C2 · dossiê '+c.t.split(' ·')[0]+' consultado',true)}
+
+const C3PROJ={
+'crio':{t:'Purificação criogênica de biogás',s:'UFSC + MetanoTech · Chamada 01 · R$ 4,2 mi · M3/6',b:kv([
+ ['Objeto','Piloto de purificação criogênica 50 Nm³/h — rota alternativa às membranas importadas'],
+ ['Físico × financeiro','52% × 48% · 🤖 A3: aderente (desvio < 5%)'],
+ ['Marco atual','M3 — relatório recebido 28/06 · hash na chegada · completude ok · aceite técnico pendente (Dra. H. Nunes)'],
+ ['Trava SoD','Desembolso M3 (R$ 700 mil) bloqueado até o aceite · perfis distintos · sem override'],
+ ['Desembolsos','M1 ✓ R$ 630 mil · M2 ✓ R$ 840 mil · executado R$ 1,47 mi (35%)'],
+ ['Sinergia (A0)','Mitiga o risco de insumo do parecer #TEC-2026-041 (C2)']])},
+'bioin':{t:'Bioinsumo fixador para cana',s:'ESALQ/USP · Chamada 01 · R$ 3,1 mi · M2/5',b:kv([
+ ['Objeto','Consórcio bacteriano fixador de N — meta: −30% de ureia'],
+ ['Físico × financeiro','38% × 40% · em dia'],['Marco atual','M2 — ensaios de campo (2 safras)'],
+ ['Desembolsos','M1 ✓ · executado R$ 930 mil (30%)'],['🤖 A3','Sem alertas · próximo relatório 08/2026']])},
+'dig':{t:'Digestato como biofertilizante',s:'Embrapa + cooperativas PR · Chamada 01 · R$ 2,8 mi · M2/4',b:kv([
+ ['Objeto','Protocolo de estabilização de digestato para uso agrícola certificado'],
+ ['Físico × financeiro','25% × 31% · <b>🤖 A3: desvio de 6%</b> (financeiro adiantado ao físico)'],
+ ['Alerta A3','Notificação automática ao coordenador · justificativa: antecipação de compra de equipamento (NF anexada) · em validação humana'],
+ ['Trava','Próximo desembolso condicionado à regularização'],
+ ['Sinergia (A0)','Conecta OP-0087 e OP-0088 (C5) — digestato dos biodigestores financiados']])},
+'iot':{t:'Sensores IoT para biodigestores',s:'SENAI-PR · Chamada 01 · R$ 1,9 mi · M4/6',b:kv([
+ ['Objeto','Kit nacional de sensoriamento (CH₄, pressão, vazão) com telemetria aberta'],
+ ['Físico × financeiro','71% × 66% · em dia'],['Marco atual','M4 — 40 kits em teste de campo'],
+ ['Sinergia direta','Telemetria candidata a insumo do 🤖 A5 (C5) — hash na origem'],['🤖 A3','Sem alertas']])},
+'lfp':{t:'Reciclagem de baterias LFP',s:'UFMG + ReMineral · Chamada 02 · R$ 5,6 mi · M2/6',b:kv([
+ ['Objeto','Rota hidrometalúrgica para recuperar lítio e fosfato de células LFP'],
+ ['Físico × financeiro','30% × 28% · em dia'],
+ ['Contexto (A0)','ReMineral é investida do Fundo (C4) com sinal 🟡 na planta demo — projetos independentes, contexto compartilhado'],
+ ['🤖 A3','Sem alertas · M2 previsto 09/2026']])},
+'nio':{t:'Cátodos com nióbio',s:'ICT + ElectraCell · Chamada 02 · R$ 6,3 mi · M3/5',b:kv([
+ ['Objeto','Dopagem com Nb para densidade energética em células LFP nacionais'],
+ ['Físico × financeiro','55% × 58% · em dia'],
+ ['Sinergia (A0)','Citada no memo do A4 (aporte ElectraCell, C4) e no parecer #TEC-2026-043 (C2)'],['🤖 A3','Sem alertas']])},
+'ele':{t:'Eletrólise alcalina nacional',s:'UFPE + H2Verde · Chamada 02 · R$ 4,8 mi · M1/5',b:kv([
+ ['Objeto','Stack alcalino 1 MW com fabricação local de eletrodos'],
+ ['Físico × financeiro','15% × 12% · em dia (início 04/2026)'],
+ ['Contexto (A0)','H2Verde Nordeste é investida C4 (FEED 90%) · projeto reduz capex do eletrolisador da OP-0090'],['🤖 A3','Sem alertas']])},
+'sol':{t:'Solventes bio-based',s:'UNICAMP + BioSolve · Chamada 01 · R$ 2,2 mi · M3/4',b:kv([
+ ['Objeto','Rota biocatalítica para solventes renováveis'],
+ ['Físico × financeiro','68% × 72% · <b>🤖 A3: alerta de cronograma</b> — M3 com 20 dias de atraso projetado'],
+ ['Ação A3','Replanejamento solicitado · nova data em análise do gestor'],
+ ['Contexto (A0)','BioSolve também é tomadora da OP-0093 (C5) e investida do Fundo (C4)']])},
+'gd':{t:'Gêmeo digital para planta química',s:'ITA + InduAI · Chamada 03 · R$ 3,4 mi · M2/5',b:kv([
+ ['Objeto','Otimização energética por gêmeo digital + IA em planta piloto'],
+ ['Físico × financeiro','34% × 30% · em dia'],['Sinergia','InduAI é investida C4 (🟢 TRL 6→8 · 70%)'],['🤖 A3','Sem alertas']])},
+'piro':{t:'Pirólise de plásticos mistos',s:'UFRJ + PiroCycle · Chamada 03 · R$ 3,9 mi · M1/6',b:kv([
+ ['Objeto','Craqueamento de resíduos plásticos para insumo químico circular'],
+ ['Físico × financeiro','8% × 10%'],
+ ['⛔ Bloqueio A3','Desembolsos suspensos — pendência ética (CONEP) · trava sem override'],
+ ['Propagação (A0)','Flag enviada a C2 (caso #044) e C4 (revisão extraordinária da investida)'],
+ ['Desbloqueio','Somente com parecer CONEP regularizado + revalidação do gestor']])}};
+function c3proj(k){const c=C3PROJ[k];dmOpen(c.t,c.s,c.b);ledger('C3 · detalhe do projeto "'+c.t+'" consultado',true)}
+
+const C4OPP={
+'electra':{t:'ElectraCell — cátodos LFP · pauta #1',s:'Baterias · ticket R$ 25 mi · nota C2: 8,4 · exclusividade vencendo',b:kv([
+ ['Tese','Nacionalização de cátodos LFP — substituição de importação'],
+ ['Base técnica','Parecer #TEC-2026-043 em emissão (C2) · TRL 7 · FTO ok (INPI/WIPO)'],
+ ['Risco-chave','Qualificação OEM 18–24 meses · mitigação: cartas de intenção de 2 montadoras'],
+ ['Sinergia','Projeto C3 "Cátodos com nióbio" (M3/5 · em dia)'],
+ ['Condicionante sugerida (🤖 A4)','Off-take ≥ 40% da capacidade antes do 2º desembolso'],
+ ['Priorização A4','#1 da pauta: maior nota técnica + prazo de exclusividade'],
+ ['Fronteira CVM 175','Recomendação consultiva · decisão exclusiva do comitê fiduciário']])},
+'verdequim':{t:'VerdeQuim — solventes verdes',s:'Química · ticket R$ 18 mi · nota C2: 7,1 · recomendação #4.815',b:kv([
+ ['Tese','Scale-up de solventes bio-based para tintas e adesivos'],
+ ['Base técnica','TRL 8 · certificação ISCC+ em curso'],
+ ['Recomendação (advisor)','Favorável · condicionante cumprida: validação independente do capex (relatório anexo)'],
+ ['Status','Aguardando decisão do comitê de 08/07']])},
+'fertialgae':{t:'FertiAlgae — biofertilizante de microalgas',s:'Fertilizantes · ticket R$ 12 mi · nota C2: 5,8 · recomendação #4.816',b:kv([
+ ['Tese','Biofertilizante de microalgas em fotobiorreatores'],
+ ['Base técnica','TRL 5 · piloto sem 12 meses de operação contínua'],
+ ['Recomendação (advisor)','Desfavorável no estágio atual · risco de escala biológica + unit economics não demonstrado'],
+ ['Alternativa sugerida (🤖 A4)','Encaminhar à Chamada 04 do C3 (fomento) — estágio mais adequado que equity'],
+ ['Registro','O comitê pode divergir da recomendação — divergência é registrada, nunca contestada']])},
+'circuit':{t:'CircuitSense — IA para fornos industriais',s:'IA industrial · ticket R$ 9 mi · nota C2: 8,1 · recomendação #4.818',b:kv([
+ ['Tese','Visão computacional + otimização de queima: −12% de energia'],
+ ['Base técnica','TRL 8 · pilotos com 2 âncoras (cimento e cerâmica) auditados'],
+ ['Recomendação (advisor)','Favorável · sem condicionante'],
+ ['Sinal 🤖 A4','Rodada concorrente detectada (fundo estrangeiro) — prioridade sugerida na pauta']])}};
+function c4opp(k){const c=C4OPP[k];dmOpen(c.t,c.s,c.b);ledger('C4 · memo da oportunidade consultado ('+c.t.split(' —')[0]+')',true)}
+
+const C4INV={
+'InduAI':{s:'IA industrial · aporte R$ 22 mi · marco TRL 6→8 · 70% · 🟢',r:[['Tese','Otimização de processos industriais com IA embarcada'],['Sinal 🤖 A4','🟢 no prazo · último checkpoint 25/06'],['Sinergia','Projeto C3 "Gêmeo digital químico" com ITA'],['Próximo marco','Certificação em 2 plantas âncora · 10/2026']]},
+'ReMineral':{s:'Minerais críticos · aporte R$ 28 mi · planta demo · 40% · 🟡',r:[['Sinal 🤖 A4','🟡 atraso de 2 meses na planta demo — detectado por marco planejado × executado'],['Plano de ação','Aprovado: re-sequenciamento de obra + fornecedor alternativo de reator'],['Contexto (A0)','Projeto C3 de reciclagem LFP (UFMG) segue em dia — independente'],['Reavaliação','Checkpoint extraordinário em 30 dias']]},
+'BioSolve':{s:'Química verde · aporte R$ 15 mi · registro REACH · 85% · 🟢',r:[['Sinal 🤖 A4','🟢 no prazo · dossiê REACH em fase final'],['Contexto (A0)','Também tomadora da OP-0093 (C5) e executora no C3 (alerta de cronograma UNICAMP)'],['Destaque','Primeira organização com trilha nas 4 aplicações — case para a proposta do leilão']]},
+'MetanoTech':{s:'Biometano · aporte R$ 8 mi · piloto 500 Nm³/h · 55% · 🟢',r:[['Sinal 🤖 A4','🟢 no prazo'],['Origem','Matchmaking do A6 (C6) · nota C2 7,8'],['Sinergia','Projeto C3 criogênico com UFSC (M3 em aceite)']]},
+'H2Verde Nordeste':{s:'H₂/amônia · aporte R$ 35 mi · FEED · 90% · 🟢',r:[['Sinal 🤖 A4','🟢 FEED quase concluído'],['Próximo marco','FID prevista 4T/2026'],['Sinergia','Projeto C3 de eletrólise alcalina (UFPE) reduz capex do stack']]},
+'AgriSat':{s:'Bioinsumos/agro · aporte R$ 6 mi · escala comercial · 62% · 🟢',r:[['Sinal 🤖 A4','🟢 no prazo · receita recorrente +8% a.m.'],['Sinergia potencial (🤖 A6)','Sugestão pendente: AgriSat ⇄ AgroGás Coop. (telemetria de 1.400 propriedades)']]},
+'LithiumLoop':{s:'Baterias/minerais · aporte R$ 19 mi · 1 kt/ano · 35% · 🟡',r:[['Sinal 🤖 A4','🟡 licença de operação em análise no órgão estadual há 60 dias'],['Ação','Acompanhamento quinzenal · sem impacto de caixa até 09/2026']]},
+'PiroCycle':{s:'Resíduos · aporte R$ 15 mi · scale-up · 20% · 🔴',r:[['Sinal 🤖 A4','🔴 revisão extraordinária convocada'],['Racional','Atraso de scale-up + pendência CONEP no projeto C3 correlato (flag do A0)'],['Status','Replanejamento da empresa em análise · recomendação do advisor em 10 dias'],['Fronteira','Follow-on ou write-down: decisão exclusiva do comitê fiduciário']]}};
+function c4inv(k){const c=C4INV[k];dmOpen(k+' — ficha da investida',c.s,kv(c.r));ledger('C4 · ficha da investida '+k+' consultada',true)}
+
+const C6ACTORS={
+'anc':{t:'BioMetano Sul S.A. — âncora',s:'Biometano · RS · centralidade 0,82 (maior da cadeia)',r:[['Papéis no consórcio','Tomadora OP-0087 (C5) · parecer em revisão (C2 #041) · pipeline A (C1)'],['Acordos vigentes (CLM)','5 assinados: UFSC, Embrapa, AgroGás, Distribuidora, Fundo I'],['Em negociação','Contrato de injeção com a Distribuidora (minuta v3)'],['🤖 A6','Hub da cadeia — prioridade em novas rodadas de matchmaking']]},
+'ufsc':{t:'UFSC — ICT',s:'Biometano/química · SC · 3 projetos ativos · 2 spin-offs',r:[['Projetos C3','Purificação criogênica (M3/6) + 2 encerrados com êxito'],['Spin-offs','2 geradas · 1 no radar do C1 com score B'],['Acordo','Convênio guarda-chuva assinado 03/2026 · vigência 36 meses'],['🤖 A6','Sugestão pendente: UFSC ⇄ Landfill Energy (purificação de gás de aterro)']]},
+'mtech':{t:'MetanoTech — startup',s:'Biometano · TRL 5→6 · patente PSA nacional · nota C2: 7,8',r:[['Origem','Descoberta pelo 🤖 A1 via depósito de patente INPI (11/2025)'],['Investimento','Aporte R$ 8 mi do Fundo I (matchmaking A6) · piloto 500 Nm³/h em 55%'],['Projeto C3','Purificação criogênica com UFSC'],['Conexão em negociação','MetanoTech ⇄ Fundo I: follow-on condicionado ao piloto']]},
+'dist':{t:'Distribuidora de gás — off-taker',s:'Biometano · contrato de injeção em negociação (CLM)',r:[['Negociação','Contrato de injeção — minuta v3 · 40 mi Nm³/ano · 🤖 A6 cobrando resposta há 12 dias'],['Relevância','Off-take é condicionante do desembolso final da OP-0087 (C5)'],['Conexões','BioMetano Sul (negociação) · Landfill Energy (interesse sinalizado)']]},
+'coop':{t:'AgroGás Coop. — cooperativa',s:'Biometano · PR · 1.400 produtores · 12 biodigestores',r:[['Papéis','Tomadora OP-0088 (C5) · 4 clusters de biodigestores'],['Projeto C3','Digestato biofertilizante com Embrapa (desvio 6% em regularização)'],['🤖 A6','Sugestão pendente: AgroGás ⇄ AgriSat (telemetria de propriedades) · afinidade 0,74']]},
+'fundo':{t:'Fundo de Inovação Eco Invest I',s:'PL R$ 320 mi · 8 investidas · advisory técnico (C4)',r:[['Conexões na cadeia','MetanoTech (investida) · BioMetano Sul (âncora de off-take)'],['Governança','Decisão exclusiva do comitê fiduciário · advisor consultivo (CVM 175)'],['🤖 A6','Nó de coinvestimento em 3 sugestões ativas']]},
+'embrapa':{t:'Embrapa — ICT',s:'Fertilizantes/biometano · referência em digestato',r:[['Projeto C3','Digestato biofertilizante com cooperativas do PR (M2/4)'],['Acordo','ACT assinado 02/2026'],['Conexão sugerida (🤖 A6)','Embrapa ⇄ NitroVerde: validação agronômica de fertilizante verde — aguardando opt-in']]},
+'trading':{t:'Trading agro — off-taker',s:'Fertilizantes · term sheet em negociação',r:[['Negociação (CLM)','Term sheet de off-take com NitroVerde · <b>exclusividade vence em 90 dias</b> — alerta 🤖 A6 ativo'],['Volume potencial','120 kt/ano de fertilizante nitrogenado verde'],['Relevância','Fortalece a OP-0090 (C5) e o caso NitroVerde no C2 (#TEC-2026-042)']]}};
+function c6actor(k){const c=C6ACTORS[k];dmOpen(c.t,c.s,kv(c.r));ledger('C6 · ficha do ator "'+c.t.split(' —')[0]+'" consultada',true)}
+
+switchAgent('c1');
+c5sel('OP-0087');
+setTimeout(()=>pushEvent(false),1500);
+setTimeout(()=>pushEvent(false),3500);
+</script>
+<div id="dm" style="display:none;position:fixed;inset:0;background:rgba(15,30,15,.5);z-index:9999;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)dmClose()">
+ <div style="background:#fff;border-radius:12px;max-width:680px;width:100%;max-height:84vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <h3 id="dmT" style="margin:0 0 2px;color:#1B5E20;font-size:16px"></h3>
+   <button onclick="dmClose()" style="border:none;background:#EEF2EE;border-radius:6px;cursor:pointer;padding:4px 10px;font-size:14px">✕</button>
+  </div>
+  <div id="dmS" style="font-size:11px;color:#6B7280;margin-bottom:12px"></div>
+  <div id="dmB" style="font-size:12.5px;line-height:1.75"></div>
+ </div>
+</div>
+</body>
+</html>
