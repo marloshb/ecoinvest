@@ -952,50 +952,80 @@ function c5pac(){const k=document.getElementById('k_pac');k.textContent=parseInt
   maestro('A5 → A0','pacote de evidência da '+curOp+' disponível para relatório circunstanciado');
   toast('Pacote da '+curOp+' selado — versão anterior preservada')}
 
-/* ============ ARCGIS MAPS SDK + LIVING ATLAS ============ */
-let gisLayers={},gisView=null,gisReady=false,gisMods=null,gisStarted=false;
+/* ============ ARCGIS MAPS SDK + LIVING ATLAS (carregamento em estágios) ============ */
+let gisLayers={},gisView=null,gisReady=false,gisStarted=false;
+function gisMsg(html){const n=document.getElementById('arcgisMap');if(n&&!gisReady)n.innerHTML='<div style="text-align:center;padding:14px;font-size:12px;color:#6B7280">'+html+'</div>'}
+function gisFail(where,err){gisStarted=false;gisMsg('⚠️ Falha ao iniciar o mapa ('+where+'):<br><b>'+(err&&err.message?err.message:err)+'</b><br><button class="btn" style="margin-top:8px" onclick="initGIS()">Tentar novamente</button>');console.error('GIS',where,err)}
 function toggleLyr(k,v){if(gisLayers[k])gisLayers[k].visible=v;if(gisReady)ledger('C5 · camada "'+k+'" '+(v?'ativada':'desativada')+' no visualizador GIS',true)}
-function drawOp(op){if(!gisMods||!gisLayers.mon)return;const M=gisMods;const o=OPS[op];
-  gisLayers.mon.removeAll();
-  const cx=o.center[0],cy=o.center[1],w=o.poly[0],h=o.poly[1];
-  gisLayers.mon.add(new M.Graphic({geometry:{type:"polygon",rings:[[[cx-w,cy+h],[cx+w,cy+h],[cx+w,cy-h],[cx-w,cy-h],[cx-w,cy+h]]]},
-    symbol:{type:"simple-fill",color:[46,125,50,0.08],outline:{color:[27,94,32,0.9],width:2}},
-    attributes:{nome:"Polígono financiado "+op,det:o.tom+" · vigilância territorial 🤖 A5 · ciclo Sentinel-2 D-1"},
-    popupTemplate:{title:"{nome}",content:"{det}"}}));
-  if(o.alertPoly){const ax=cx+o.alertPoly[0],ay=cy+o.alertPoly[1],aw=o.alertPoly[2],ah=o.alertPoly[3];
-    gisLayers.mon.add(new M.Graphic({geometry:{type:"polygon",rings:[[[ax-aw,ay+ah],[ax+aw,ay+ah],[ax+aw,ay-ah],[ax-aw,ay-ah],[ax-aw,ay+ah]]]},
-      symbol:{type:"simple-fill",color:[220,38,38,0.25],outline:{color:[220,38,38,1],width:2,style:"dash"}},
-      attributes:{nome:"⚠ Mudança de cobertura detectada (2,3 ha)",det:"Detecção 🤖 A5 por diferença espectral entre ciclos Sentinel-2 · confiança 88% · protocolo D+1/D+5 em curso"},
-      popupTemplate:{title:"{nome}",content:"{det}"}}))}
-  o.assets.forEach(p=>gisLayers.mon.add(new M.Graphic({geometry:{type:"point",longitude:cx+p[0],latitude:cy+p[1]},
-    symbol:{type:"simple-marker",size:13,color:p[2],outline:{color:[255,255,255],width:2}},
-    attributes:{nome:p[3],det:p[4]},popupTemplate:{title:"{nome}",content:"{det}"}})));
-  if(gisView)gisView.goTo({center:o.center,zoom:o.zoom},{duration:1200}).catch(()=>{})}
+
+/* Estágio 1 — mapa base + ativos da OP-0087 (leve, sem dependências externas além do basemap) */
 function initGIS(){
- if(gisStarted||typeof require==='undefined')return;gisStarted=true;
- try{
- require(["esri/Map","esri/views/MapView","esri/layers/ImageryLayer","esri/layers/FeatureLayer","esri/layers/GraphicsLayer","esri/Graphic","esri/widgets/Legend","esri/widgets/Expand","esri/widgets/ScaleBar","esri/widgets/BasemapToggle"],
- function(Map,MapView,ImageryLayer,FeatureLayer,GraphicsLayer,Graphic,Legend,Expand,ScaleBar,BasemapToggle){
-  gisMods={Graphic:Graphic};
-  const lulc=new ImageryLayer({portalItem:{id:"cfcb7609de5f478eb7666240902d4d3d"},title:"Sentinel-2 10m Land Use/Land Cover — Living Atlas",opacity:0.45,visible:document.getElementById('lyrLULC').checked});
-  const fire=new FeatureLayer({portalItem:{id:"dece90af1a0242dcbf0ca36d30276aa3"},title:"Focos térmicos VIIRS (últimas 48h) — Living Atlas",visible:document.getElementById('lyrFire').checked});
-  lulc.load().catch(e=>{console.warn("LULC",e);const c=document.getElementById('lyrLULC');if(c){c.checked=false;c.disabled=true}});
-  fire.load().catch(e=>{console.warn("VIIRS",e);const c=document.getElementById('lyrFire');if(c){c.checked=false;c.disabled=true}});
-  const mon=new GraphicsLayer({title:"Ativos monitorados (A5)"});
-  gisLayers={lulc:lulc,fire:fire,mon:mon};
-  const node=document.getElementById('arcgisMap');node.innerHTML='';
-  const map=new Map({basemap:"hybrid",layers:[lulc,fire,mon]});
-  gisView=new MapView({container:"arcgisMap",map:map,center:OPS[curOp].center,zoom:OPS[curOp].zoom,constraints:{minZoom:4}});
-  gisView.ui.add(new Expand({view:gisView,content:new Legend({view:gisView}),expandTooltip:"Legenda"}),"bottom-left");
-  gisView.ui.add(new ScaleBar({view:gisView,unit:"metric"}),"bottom-right");
-  gisView.ui.add(new BasemapToggle({view:gisView,nextBasemap:"topo-vector"}),"top-right");
-  gisView.when(()=>{gisReady=true;drawOp(curOp);
-    ledger('C5 · visualizador GIS iniciado · World Imagery + 2 camadas Living Atlas',true);
-    maestro('A5 → A0','geovisualização ativa: Sentinel-2 LULC 10m e VIIRS conectados à carteira MRV');
-    toast('Mapa ArcGIS carregado — clique nas operações da carteira para navegar')});
- });}catch(e){document.getElementById('arcgisMap').textContent='ArcGIS SDK indisponível: '+e;gisStarted=false}}
-/* inicializa o mapa somente quando a tela C5 está visível (senão o container tem tamanho zero) */
-const _goOrig=go;
+ if(gisReady||gisStarted)return;
+ if(typeof require==='undefined'){gisMsg('⏳ SDK ainda não carregado…');return}
+ gisStarted=true;
+ gisMsg('🗺️ inicializando o visualizador…');
+ require(["esri/Map","esri/views/MapView","esri/layers/GraphicsLayer","esri/Graphic"],
+ function(Map,MapView,GraphicsLayer,Graphic){
+  try{
+   const mon=new GraphicsLayer({title:"OP-0087 · ativos monitorados (A5)"});
+   mon.add(new Graphic({geometry:{type:"polygon",rings:[[[-53.00,-28.30],[-52.84,-28.30],[-52.84,-28.40],[-53.00,-28.40],[-53.00,-28.30]]]},
+     symbol:{type:"simple-fill",color:[46,125,50,0.08],outline:{color:[27,94,32,0.9],width:2}},
+     attributes:{nome:"Polígono financiado OP-0087",det:"BioMetano Sul · R$ 380 mi · vigilância territorial 🤖 A5 · ciclo Sentinel-2 D-1"},
+     popupTemplate:{title:"{nome}",content:"{det}"}}));
+   mon.add(new Graphic({geometry:{type:"polygon",rings:[[[-52.975,-28.372],[-52.962,-28.372],[-52.962,-28.381],[-52.975,-28.381],[-52.975,-28.372]]]},
+     symbol:{type:"simple-fill",color:[220,38,38,0.25],outline:{color:[220,38,38,1],width:2,style:"dash"}},
+     attributes:{nome:"⚠ Mudança de cobertura detectada (2,3 ha)",det:"Detecção 🤖 A5 por diferença espectral entre ciclos Sentinel-2 · confiança 88% · protocolo D+1/D+5 em curso · sem sobreposição com embargos"},
+     popupTemplate:{title:"{nome}",content:"{det}"}}));
+   [{x:-52.94,y:-28.33,c:[46,125,50],nome:"Biodigestor 1 · operacional",det:"Última imagem 28/06 · 🤖 A5: sem alertas · telemetria ok"},
+    {x:-52.90,y:-28.36,c:[46,125,50],nome:"Biodigestor 2 · operacional",det:"Vazão 210 Nm³/h · medidor calibrado · hash de telemetria íntegro"},
+    {x:-52.955,y:-28.375,c:[245,158,11],nome:"Biodigestor 3 · em obra (71%)",det:"🤖 A5 detectou avanço de obra (64%→71%) · série temporal no pacote de evidência"},
+    {x:-52.88,y:-28.33,c:[46,125,50],nome:"Biodigestor 4 · operacional",det:"Foto georreferenciada validada (GPS + hash) contra imagem de satélite"},
+    {x:-52.87,y:-28.35,c:[37,99,235],nome:"Planta de purificação",det:"96,8% CH₄ · certificado mensal da distribuidora conciliado pelo 🤖 A5"}]
+   .forEach(function(p){mon.add(new Graphic({geometry:{type:"point",longitude:p.x,latitude:p.y},
+     symbol:{type:"simple-marker",size:13,color:p.c,outline:{color:[255,255,255],width:2}},
+     attributes:{nome:p.nome,det:p.det},popupTemplate:{title:"{nome}",content:"{det}"}}))});
+   gisLayers.mon=mon;
+   document.getElementById('arcgisMap').innerHTML='';
+   const map=new Map({basemap:"hybrid",layers:[mon]});
+   gisView=new MapView({container:"arcgisMap",map:map,center:[-52.915,-28.352],zoom:12,constraints:{minZoom:4}});
+   gisView.when(function(){
+     gisReady=true;
+     ledger('C5 · visualizador GIS iniciado · basemap World Imagery + ativos OP-0087',true);
+     maestro('A5 → A0','geovisualização ativa · carregando camadas do Living Atlas');
+     toast('Mapa ArcGIS carregado — adicionando camadas do Living Atlas…');
+     gisWidgets();gisLivingAtlas();
+   },function(err){gisFail('MapView',err)});
+  }catch(e){gisFail('montagem do mapa',e)}
+ },function(err){gisFail('download dos módulos',err)});
+}
+
+/* Estágio 2 — widgets (falha não derruba o mapa) */
+function gisWidgets(){
+ require(["esri/widgets/Legend","esri/widgets/Expand","esri/widgets/ScaleBar","esri/widgets/BasemapToggle"],
+ function(Legend,Expand,ScaleBar,BasemapToggle){
+  try{
+   gisView.ui.add(new Expand({view:gisView,content:new Legend({view:gisView}),expandTooltip:"Legenda"}),"bottom-left");
+   gisView.ui.add(new ScaleBar({view:gisView,unit:"metric"}),"bottom-right");
+   gisView.ui.add(new BasemapToggle({view:gisView,nextBasemap:"topo-vector"}),"top-right");
+  }catch(e){console.warn('GIS widgets',e)}
+ },function(err){console.warn('GIS widgets require',err)});
+}
+
+/* Estágio 3 — Living Atlas: cada camada carrega isolada; falha só desabilita o toggle */
+function gisLivingAtlas(){
+ require(["esri/layers/ImageryLayer","esri/layers/FeatureLayer"],function(ImageryLayer,FeatureLayer){
+  try{
+   const lulc=new ImageryLayer({portalItem:{id:"cfcb7609de5f478eb7666240902d4d3d"},title:"Sentinel-2 10m Land Use/Land Cover — Living Atlas",opacity:0.45,visible:document.getElementById('lyrLULC').checked});
+   lulc.load().then(function(){gisView.map.add(lulc,0);gisLayers.lulc=lulc;ledger('C5 · Living Atlas: Sentinel-2 LULC 10m adicionada ao mapa',true)})
+    .catch(function(e){console.warn('LULC',e);const c=document.getElementById('lyrLULC');if(c){c.checked=false;c.disabled=true;c.parentElement.title='camada indisponível no momento'}});
+   const fire=new FeatureLayer({portalItem:{id:"dece90af1a0242dcbf0ca36d30276aa3"},title:"Focos térmicos VIIRS (48h) — Living Atlas",visible:document.getElementById('lyrFire').checked});
+   fire.load().then(function(){gisView.map.add(fire);gisLayers.fire=fire;ledger('C5 · Living Atlas: focos térmicos VIIRS conectados',true)})
+    .catch(function(e){console.warn('VIIRS',e);const c=document.getElementById('lyrFire');if(c){c.checked=false;c.disabled=true;c.parentElement.title='camada indisponível no momento'}});
+  }catch(e){console.warn('Living Atlas',e)}
+ },function(err){console.warn('Living Atlas require',err)});
+}
+
+/* Boot com retry: espera SDK baixar E container visível */
 window.go=function(id,el){_goOrig(id,el);if(id==='c5')gisBoot()};
 let _gisTimer=null;
 function gisBoot(){
@@ -1007,9 +1037,9 @@ function gisBoot(){
   if(!n||gisReady){clearInterval(_gisTimer);_gisTimer=null;return}
   const visible=(n.offsetParent!==null)&&n.clientWidth>50;
   if(typeof require!=='undefined'&&visible&&!gisStarted){clearInterval(_gisTimer);_gisTimer=null;initGIS();return}
-  if(typeof require==='undefined'&&tries%15===0){n.textContent='⏳ baixando ArcGIS Maps SDK ('+Math.round(tries/5)+'s)… requer acesso a js.arcgis.com'}
+  if(typeof require==='undefined'&&tries%15===0){gisMsg('⏳ baixando ArcGIS Maps SDK ('+Math.round(tries/5)+'s)… requer acesso a js.arcgis.com')}
   if(tries>300){clearInterval(_gisTimer);_gisTimer=null;
-   n.innerHTML='⚠️ Não foi possível carregar o ArcGIS SDK. Verifique a internet e <button class=\'btn\' onclick=\'gisStarted=false;gisBoot()\'>tente novamente</button>'}
+   gisMsg('⚠️ Não foi possível baixar o ArcGIS SDK. Verifique a internet e <button class="btn" onclick="gisBoot()">tente novamente</button>')}
  },200)}
 window.addEventListener('load',function(){var s=document.getElementById('c5');if(s&&s.classList.contains('active'))gisBoot()});
 
